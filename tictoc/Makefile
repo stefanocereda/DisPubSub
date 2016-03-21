@@ -1,12 +1,12 @@
 #
-# OMNeT++/OMNEST Makefile for tictoc.o
+# OMNeT++/OMNEST Makefile for tictoc
 #
 # This file was generated with the command:
-#  opp_makemake -f -o tictoc.o
+#  opp_makemake -f
 #
 
 # Name of target to be created (-o option)
-TARGET = tictoc.o$(EXE_SUFFIX)
+TARGET = tictoc$(EXE_SUFFIX)
 
 # User interface (uncomment one) (-u option)
 USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(CMDENV_LIBS)
@@ -103,7 +103,7 @@ msgheaders: $(MSGFILES:.msg=_m.h)
 clean:
 	$(qecho) Cleaning...
 	$(Q)-rm -rf $O
-	$(Q)-rm -f tictoc.o tictoc.o.exe libtictoc.o.so libtictoc.o.a libtictoc.o.dll libtictoc.o.dylib
+	$(Q)-rm -f tictoc tictoc.exe libtictoc.so libtictoc.a libtictoc.dll libtictoc.dylib
 	$(Q)-rm -f ./*_m.cc ./*_m.h
 
 cleanall: clean
