@@ -5,3 +5,6 @@
  Quando qualcuno se ne va se è un client fottesega, se è un broker manda la sua routing table a un altro broker.
 
  I broker/client sono fissi o un client può diventare broker? => NO SONO FISSI
+
+
+ NUOVO PROBLEMA: quando un client si connette da capo, deve ricevere i messaggi vecchi? Se si, dove li prende? Se no, come inizializza il vettore?
