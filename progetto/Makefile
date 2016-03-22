@@ -1,18 +1,17 @@
 #
-# OMNeT++/OMNEST Makefile for prova
+# OMNeT++/OMNEST Makefile for progetto
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out
+#  opp_makemake
 #
 
 # Name of target to be created (-o option)
-TARGET = prova$(EXE_SUFFIX)
+TARGET = progetto$(EXE_SUFFIX)
 
 # User interface (uncomment one) (-u option)
-USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LIBS)
+USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(CMDENV_LIBS)
 #USERIF_LIBS = $(CMDENV_LIBS)
 #USERIF_LIBS = $(TKENV_LIBS)
-#USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
 INCLUDE_PATH = -I.
@@ -28,14 +27,12 @@ PROJECT_OUTPUT_DIR = out
 PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
-# Object files for local .cc, .msg and .sm files
-OBJS = $O/broker.o $O/client.o
+# Object files for local .cc and .msg files
+OBJS = $O/broker.o $O/client.o $O/client_login_m.o
 
 # Message files
-MSGFILES =
-
-# SM files
-SMFILES =
+MSGFILES = \
+    client_login.msg
 
 #------------------------------------------------------------------------------
 
@@ -63,7 +60,6 @@ OMNETPP_LIBS = -L"$(OMNETPP_LIB_SUBDIR)" -L"$(OMNETPP_LIB_DIR)" -loppmain$D $(US
 
 COPTS = $(CFLAGS)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
-SMCOPTS =
 
 # we want to recompile everything if COPTS changes,
 # so we store COPTS into $COPTS_FILE and have object
@@ -90,7 +86,7 @@ $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile
 	@echo Creating executable: $@
 	$(Q)$(CXX) $(LDFLAGS) -o $O/$(TARGET)  $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS)
 
-.PHONY: all clean cleanall depend msgheaders smheaders
+.PHONY: all clean cleanall depend msgheaders
 
 .SUFFIXES: .cc
 
@@ -103,28 +99,21 @@ $O/%.o: %.cc $(COPTS_FILE)
 	$(qecho) MSGC: $<
 	$(Q)$(MSGC) -s _m.cc $(MSGCOPTS) $?
 
-%_sm.cc %_sm.h: %.sm
-	$(qecho) SMC: $<
-	$(Q)$(SMC) -c++ -suffix cc $(SMCOPTS) $?
-
 msgheaders: $(MSGFILES:.msg=_m.h)
-
-smheaders: $(SMFILES:.sm=_sm.h)
 
 clean:
 	$(qecho) Cleaning...
 	$(Q)-rm -rf $O
-	$(Q)-rm -f prova prova.exe libprova.so libprova.a libprova.dll libprova.dylib
-	$(Q)-rm -f ./*_m.cc ./*_m.h ./*_sm.cc ./*_sm.h
+	$(Q)-rm -f progetto progetto.exe libprogetto.so libprogetto.a libprogetto.dll libprogetto.dylib
+	$(Q)-rm -f ./*_m.cc ./*_m.h
 
 cleanall: clean
 	$(Q)-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
 	$(qecho) Creating dependencies...
-	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES) $(SM_CC_FILES)  ./*.cc
+	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/broker.o: broker.cc
 $O/client.o: client.cc
-
