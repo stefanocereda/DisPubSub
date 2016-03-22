@@ -33,25 +33,25 @@ simple broker
         //Client
         input ic1;
         input ic2;
-        //    input ic3;
-        //    input ic4;
+        input ic3;
+        input ic4;
         //Broker
         input ib1;
-     //   input ib2;
-       // input ib3;
-        //input ib4;
+        input ib2;
+        input ib3;
+        input ib4;
 
 
         //Client
         output oc1;
         output oc2;
-        //    output oc3;
-        //    output oc4;
+        output oc3;
+        output oc4;
         //Broker
         output ob1;
-     //   output ob2;
-      //  output ob3;
-       // output ob4;
+        output ob2;
+        output ob3;
+        output ob4;
 
 }
 
@@ -60,7 +60,7 @@ simple broker
 //
 network Network
 {
-    @display("bgb=1038,467");
+    @display("bgb=1381.9525,586.125");
     types:
     submodules:
         client1: client {
@@ -81,7 +81,37 @@ network Network
         client4: client {
             @display("p=360,35");
         }
-    connections:
+        broker3: broker {
+            @display("p=569.1925,201.8875");
+        }
+        broker5: broker {
+            @display("p=853.1375,285.2475");
+        }
+        broker6: broker {
+            @display("p=587.4275,427.22");
+        }
+        broker4: broker {
+            @display("p=877.885,106.805");
+        }
+        client5: client {
+            @display("p=976.875,24.7475");
+        }
+        client6: client {
+            @display("p=1031.58,105.5025");
+        }
+        client7: client {
+            @display("p=1017.2525,272.2225");
+        }
+        client8: client {
+            @display("p=989.9,401.17");
+        }
+        client9: client {
+            @display("p=705.955,526.21");
+        }
+        client10: client {
+            @display("p=514.4875,543.1425");
+        }
+    connections allowunconnected:
         client1.out --> broker1.ic1;
         client2.out --> broker1.ic2;
         broker1.oc1 --> client1.in;
@@ -92,5 +122,25 @@ network Network
         broker2.oc1 --> client3.in;
         client4.out --> broker2.ic2;
         broker2.oc2 --> client4.in;
+        broker2.ob2 --> broker3.ib1;
+        broker3.ob1 --> broker2.ib2;
+        broker3.ob2 --> broker4.ib1;
+        broker4.ob1 --> broker3.ib2;
+        broker3.ob3 --> broker5.ib1;
+        broker5.ob1 --> broker3.ib3;
+        broker3.ob4 --> broker6.ib1;
+        broker6.ob1 --> broker3.ib4;
+        client5.out --> broker4.ic1;
+        broker4.oc1 --> client5.in;
+        client6.out --> broker4.ic2;
+        broker4.oc2 --> client6.in;
+        client7.out --> broker5.ic1;
+        broker5.oc1 --> client7.in;
+        client8.out --> broker5.ic2;
+        broker5.oc2 --> client8.in;
+        client9.out --> broker6.ic1;
+        broker6.oc1 --> client9.in;
+        client10.out --> broker6.ic2;
+        broker6.oc2 --> client10.in;
 }
 
