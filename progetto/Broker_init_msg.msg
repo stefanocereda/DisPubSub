@@ -12,8 +12,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
-message Subscribe_msg
+message Broker_init_msg
 {
     int srcId;
-    int topic;
 }

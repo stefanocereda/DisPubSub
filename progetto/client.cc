@@ -23,9 +23,15 @@ Define_Module(client);
 
 void client::initialize()
 {
+      EV << this->getFullName() << " con id: " << this->getId() << "\n";
 
       Subscribe_msg *msg = new Subscribe_msg("subscribe");
+
+      //Setup messaggio subscribe
+      msg->setSrcId(this->getId());
       msg->setTopic(intuniform(0, 5));
+
+      //Invio
       send(msg, "gate$o",0);
 }
 
