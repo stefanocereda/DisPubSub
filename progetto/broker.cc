@@ -6,14 +6,12 @@
  */
 #include <string.h>
 #include <omnetpp.h>
+#include <Subscribe_msg_m.h>
 
 using namespace omnetpp;
 
 class broker : public cSimpleModule
 {
-private:
-    bool gateIdb;
-
   protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
@@ -23,14 +21,23 @@ private:
 // The module class needs to be registered with OMNeT++
 Define_Module(broker);
 
-void broker::initialize()
-{
-    if (strcmp("client1", getName()) == 0 || strcmp("client3", getName()) == 0) {
+void broker::initialize(){
+
+    int n = gateSize("gate");
+
+
+       for(int i = 0; i < n ; i++){
+        cMessage *msg = new cMessage("broker");
+        EV << "Sending message " << msg << " on gate[" << i << "]\n";
+        send(msg, "gate$o", i);
+    }
+
+//    if (strcmp("client1", getName()) == 0 || strcmp("client3", getName()) == 0) {
         // create and send first message on gate "out". "tictocMsg" is an
         // arbitrary string which will be the name of the message object.
-        cMessage *msg = new cMessage("subscribe");
-        send(msg, "out");
-    }
+  //      cMessage *msg = new cMessage("subscribe");
+    //    send(msg, "gate$o");
+    //}
 }
 
 void broker::handleMessage(cMessage *msg)
@@ -39,19 +46,20 @@ void broker::handleMessage(cMessage *msg)
     // at the module. Here, we just send it to the other module, through
     // gate `out'. Because both `tic' and `toc' does the same, the message
     // will bounce between the two.
-    if(msg->arrivedOn("ic1")){
-        cMessage *msg = new cMessage("ok");
-        send(msg, "oc1"); // send out the message
-        this->gateIdb = msg->arrivedOn("ic2");
 
+
+    if(strcmp("broker", msg->getFullName()) == 0){
+        int i = msg->getArrivalGate()->getIndex();
+
+        cMessage *m = new cMessage("Router Ok!");
+
+        send(m, "gate$o",i);
     }
 
-    if(msg->arrivedOn("ic2")){
-        cMessage *msg = new cMessage("ok");
-                send(msg, "oc2"); // send out the message
+    if(strcmp("subscribe", msg->getFullName()) == 0){
+        if(Subscribe_msg *m = dynamic_cast<Subscribe_msg*>(msg))
+        EV << "Subscription" << m->getTopic();
     }
-
-
 
 }
 

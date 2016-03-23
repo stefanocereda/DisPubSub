@@ -19,8 +19,7 @@ simple client
 {
     @display("i=old/laptop");
     gates:
-        input in;
-        output out;
+        inout gate[];
 }
 
 //
@@ -30,28 +29,8 @@ simple broker
 {
     @display("i=device/server2");
     gates:
-        //Client
-        input ic1;
-        input ic2;
-        input ic3;
-        input ic4;
-        //Broker
-        input ib1;
-        input ib2;
-        input ib3;
-        input ib4;
-
-
-        //Client
-        output oc1;
-        output oc2;
-        output oc3;
-        output oc4;
-        //Broker
-        output ob1;
-        output ob2;
-        output ob3;
-        output ob4;
+        inout gate[];
+        
 
 }
 
@@ -62,6 +41,10 @@ network Network
 {
     @display("bgb=1381.9525,586.125");
     types:
+        channel Channel extends ned.DelayChannel
+        {
+            delay = 100ms;
+        }
     submodules:
         client1: client {
             @display("p=69,179");
@@ -112,35 +95,79 @@ network Network
             @display("p=514.4875,543.1425");
         }
     connections allowunconnected:
-        client1.out --> broker1.ic1;
-        client2.out --> broker1.ic2;
-        broker1.oc1 --> client1.in;
-        broker1.oc2 --> client2.in;
-        broker1.ob1 --> broker2.ib1;
-        broker2.ob1 --> broker1.ib1;
-        client3.out --> broker2.ic1;
-        broker2.oc1 --> client3.in;
-        client4.out --> broker2.ic2;
-        broker2.oc2 --> client4.in;
-        broker2.ob2 --> broker3.ib1;
-        broker3.ob1 --> broker2.ib2;
-        broker3.ob2 --> broker4.ib1;
-        broker4.ob1 --> broker3.ib2;
-        broker3.ob3 --> broker5.ib1;
-        broker5.ob1 --> broker3.ib3;
-        broker3.ob4 --> broker6.ib1;
-        broker6.ob1 --> broker3.ib4;
-        client5.out --> broker4.ic1;
-        broker4.oc1 --> client5.in;
-        client6.out --> broker4.ic2;
-        broker4.oc2 --> client6.in;
-        client7.out --> broker5.ic1;
-        broker5.oc1 --> client7.in;
-        client8.out --> broker5.ic2;
-        broker5.oc2 --> client8.in;
-        client9.out --> broker6.ic1;
-        broker6.oc1 --> client9.in;
-        client10.out --> broker6.ic2;
-        broker6.oc2 --> client10.in;
+
+	broker1.gate++ <--> Channel <--> client1.gate++;
+	broker1.gate++ <--> Channel <--> client2.gate++;
+	
+	broker2.gate++ <--> Channel <--> client3.gate++;
+	broker2.gate++ <--> Channel <--> client4.gate++;
+
+	broker4.gate++ <--> Channel <--> client5.gate++;
+	broker4.gate++ <--> Channel <--> client6.gate++;
+
+	broker5.gate++ <--> Channel <--> client7.gate++;
+	broker5.gate++ <--> Channel <--> client8.gate++;
+
+	broker6.gate++ <--> Channel <--> client9.gate++;
+	broker6.gate++ <--> Channel <--> client10.gate++;
+	
+	broker1.gate++ <--> Channel <--> broker2.gate++;
+	broker2.gate++ <--> Channel <--> broker3.gate++;
+	broker3.gate++ <--> Channel <--> broker4.gate++;
+	broker3.gate++ <--> Channel <--> broker5.gate++;
+	broker3.gate++ <--> Channel <--> broker6.gate++;
+	
+	//Broker 1
+//	broker1.out++ --> Channel --> client1.in;
+//	broker1.in++ <-- Channel <-- client1.out;
+	
+//	broker1.out++ --> Channel --> client2.in;
+//	broker1.in++ <-- Channel <-- client2.out;
+	
+//	broker1.out++ --> Channel --> broker2.in++;
+//	broker1.in++ <-- Channel <-- broker2.out++;
+
+
+	//Broker 2
+//	broker2.out++ --> Channel --> client3.in;
+//	broker2.in++ <-- Channel <-- client3.out;
+	
+//	broker2.out++ --> Channel --> client4.in;
+//	broker2.in++ <-- Channel <-- client4.out;
+	
+//	broker2.out++ --> Channel --> broker3.in++;
+//	broker2.in++ <-- Channel <-- broker3.out++;
+	
+	//Broker 3
+//	broker3.out++ --> Channel --> broker4.in++;
+//	broker3.in++ <-- Channel <-- broker4.out++;
+	
+//	broker3.out++ --> Channel --> broker5.in++;
+//	broker3.in++ <-- Channel <-- broker5.out++;
+	
+//	broker3.out++ --> Channel --> broker6.in++;
+//	broker3.in++ <-- Channel <-- broker6.out++;
+	
+	//Broker 4
+//	broker4.out++ --> Channel --> client5.in;
+//	broker4.in++ <-- Channel <-- client5.out;
+	
+//	broker4.out++ --> Channel --> client6.in;
+//	broker4.in++ <-- Channel <-- client6.out;
+	
+	//Broker 5
+//	broker5.out++ --> Channel --> client7.in;
+//	broker5.in++ <-- Channel <-- client7.out;
+	
+//	broker5.out++ --> Channel --> client8.in;
+//	broker5.in++ <-- Channel <-- client8.out;
+	
+	//Broker 6
+//	broker6.out++ --> Channel --> client9.in;
+//	broker6.in++ <-- Channel <-- client9.out;
+	
+//	broker6.out++ --> Channel --> client10.in;
+//	broker6.in++ <-- Channel <-- client10.out;
+	
 }
 

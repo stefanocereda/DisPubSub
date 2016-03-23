@@ -6,6 +6,7 @@
  */
 #include <string.h>
 #include <omnetpp.h>
+#include <Subscribe_msg_m.h>
 
 using namespace omnetpp;
 
@@ -22,13 +23,14 @@ Define_Module(client);
 
 void client::initialize()
 {
-    if (strcmp("client1", getName()) == 0 || strcmp("client3", getName()) == 0) {
-        // create and send first message on gate "out". "tictocMsg" is an
-        // arbitrary string which will be the name of the message object.
-        cMessage *msg = new cMessage("subscribe");
-        send(msg, "out");
-    }
+
+      Subscribe_msg *msg = new Subscribe_msg("subscribe");
+      msg->setTopic(intuniform(0, 5));
+      send(msg, "gate$o",0);
 }
+
+
+
 
 void client::handleMessage(cMessage *msg)
 {
