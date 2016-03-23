@@ -1,5 +1,7 @@
 *out
 *out/*
 *.tkenvrc
+*Makefile
 
 tictoc/tictoc
+progetto/progetto
