@@ -21,9 +21,7 @@ simple broker
 // TODO documentation
 //
 network Network
-{
-    //@display("bgb=1381.9525,586.125");
-    
+{    
     types:
         channel Channel extends ned.DelayChannel
         {

@@ -39,8 +39,10 @@ void broker::handleMessage(cMessage *msg)
     int channel = m->getArrivalGate()->getIndex();
 
     //check whether it is a new topic
+    bool newTopic = false;
     SubscriptionTable::iterator it = subs_table.find(topic);
     if (it == subs_table.end()){
+        newTopic = true;
         //build a new list
         std::list<int> toAdd;
         toAdd.push_back(channel);
@@ -54,6 +56,20 @@ void broker::handleMessage(cMessage *msg)
         if (std::find(old.begin(), old.end(), channel) != old.end())
             //and add it
             old.push_back(channel);
+    }
+
+
+    //OK, now we should send the subscription to all the channels except the one where we have received it
+    //TODO: EVITARE DI MANDARE AI CLIENT
+    if (newTopic){
+        int n = gateSize("gate");
+        for (int i = 0; i < n ; i++){
+            if (i != channel){
+                // Duplicate message and send the copy.
+                Subscribe_msg *copy = (Subscribe_msg *) m->dup();
+                send(copy, "gate$o", i);
+            }
+       }
     }
 }
 
