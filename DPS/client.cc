@@ -6,6 +6,7 @@
  */
 #include <string.h>
 #include <omnetpp.h>
+#include "subscribe_m.h"
 
 class client : public cSimpleModule
 {
@@ -20,7 +21,7 @@ Define_Module(client);
 
 void client::initialize()
 {
-      EV << this->getFullName() << " con id: " << this->getId() << "\n";
+     EV << this->getFullName() << " con id: " << this->getId() << "\n";
 
       Subscribe_msg *msg = new Subscribe_msg("subscribe");
 
