@@ -7,6 +7,7 @@
 #include <string.h>
 #include <omnetpp.h>
 #include "subscribe_m.h"
+#include "broker_init_m.h"
 #include <algorithm>
 
 class broker : public cSimpleModule
@@ -16,7 +17,13 @@ private:
     typedef std::map<int, std::list<int>> SubscriptionTable;
     SubscriptionTable subs_table;
 
-  protected:
+    //and where are the other brokers
+    std::list<int> broker_gate_table;
+
+    void handleSubscribeMessage(Subscribe_msg *m);
+    void handleBrokerInitMessage(Broker_init_msg *m);
+
+protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
@@ -25,16 +32,35 @@ private:
 // The module class needs to be registered with OMNeT++
 Define_Module(broker);
 
-
+//Tell everybody that we are up and running :)
 void broker::initialize(){
+    int n = gateSize("gate");
 
+    for(int i = 0; i < n ; i++){
+        Broker_init_msg *msg = new Broker_init_msg("broker");
+        msg->setSrcId(this->getId());
+        send(msg, "gate$o", i);
+      }
 }
 
 void broker::handleMessage(cMessage *msg)
 {
-    //TODO: fare un check + carino del tipo
-    Subscribe_msg *m = check_and_cast<Subscribe_msg *> (msg);
+    if(strcmp("subscribe", msg->getFullName()) == 0){
+        handleSubscribeMessage(dynamic_cast<Subscribe_msg*>(msg));
+    }
+    else if (strcmp("broker", msg->getFullName()) == 0){
+        handleBrokerInitMessage(dynamic_cast<Broker_init_msg*>(msg));
+    }
+}
 
+void broker::handleBrokerInitMessage(Broker_init_msg *m)
+{
+    int channel = m->getArrivalGate()->getIndex();
+    broker_gate_table.push_back(channel);
+}
+
+void broker::handleSubscribeMessage(Subscribe_msg *m)
+{
     int topic = m->getTopic();
     int channel = m->getArrivalGate()->getIndex();
 
@@ -63,11 +89,11 @@ void broker::handleMessage(cMessage *msg)
     //TODO: EVITARE DI MANDARE AI CLIENT
     if (newTopic){
         int n = gateSize("gate");
-        for (int i = 0; i < n ; i++){
-            if (i != channel){
+        for (std::list<int>::const_iterator iterator = broker_gate_table.begin(), end = broker_gate_table.end(); iterator != end; ++iterator) {
+            if (*iterator != channel){
                 // Duplicate message and send the copy.
                 Subscribe_msg *copy = (Subscribe_msg *) m->dup();
-                send(copy, "gate$o", i);
+                send(copy, "gate$o", *iterator);
             }
        }
     }
