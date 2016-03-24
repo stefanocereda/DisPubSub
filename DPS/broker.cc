@@ -55,6 +55,7 @@ void broker::handleMessage(cMessage *msg)
 
 void broker::handleBrokerInitMessage(Broker_init_msg *m)
 {
+    //TODO: quando un nuovo broker si connette dovremmo mandargli tutte le nostre subscription
     int channel = m->getArrivalGate()->getIndex();
     broker_gate_table.push_back(channel);
 }
@@ -86,7 +87,7 @@ void broker::handleSubscribeMessage(Subscribe_msg *m)
 
 
     //OK, now we should send the subscription to all the channels except the one where we have received it
-    //TODO: EVITARE DI MANDARE AI CLIENT
+    //TODO broker centrale, gli arriva subscription arg1 da tutti e 3 i canali, come faccio a capire che non devo mandarla in giro?
     if (newTopic){
         int n = gateSize("gate");
         for (std::list<int>::const_iterator iterator = broker_gate_table.begin(), end = broker_gate_table.end(); iterator != end; ++iterator) {
