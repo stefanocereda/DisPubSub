@@ -8,6 +8,8 @@
 #include <omnetpp.h>
 #include "subscribe_m.h"
 
+using namespace omnetpp;
+
 class client : public cSimpleModule
 {
   protected:

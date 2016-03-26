@@ -10,6 +10,8 @@
 #include "broker_init_m.h"
 #include <algorithm>
 
+using namespace omnetpp;
+
 class broker : public cSimpleModule
 {
 private:
