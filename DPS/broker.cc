@@ -90,8 +90,8 @@ void broker::handleSubscribeMessage(Subscribe_msg *m)
 
     //OK, now we should send the subscription to all the channels except the one where we have received it
     //TODO broker centrale, gli arriva subscription arg1 da tutti e 3 i canali, come faccio a capire che non devo mandarla in giro?
+    //no ma forse è giusto che la mandi, ci devo pensare
     if (newTopic){
-        int n = gateSize("gate");
         for (std::list<int>::const_iterator iterator = broker_gate_table.begin(), end = broker_gate_table.end(); iterator != end; ++iterator) {
             if (*iterator != channel){
                 // Duplicate message and send the copy.
