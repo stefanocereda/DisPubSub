@@ -20,7 +20,7 @@
  * <pre>
  * message Subscribe_msg
  * {
- *     int srcId;//TODO, REALLY NEEDED?
+ *     int srcId;//TODO, REALLY NEEDED? the server has the gate, is it sufficient?
  *     int topic;
  * }
  * </pre>

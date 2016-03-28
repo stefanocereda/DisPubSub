@@ -1,4 +1,4 @@
 message Broker_init_msg
 {
-    int srcId;
+    int srcId; //TODO: really needed?
 };

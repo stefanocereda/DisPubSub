@@ -7,6 +7,7 @@
 #include <string.h>
 #include <omnetpp.h>
 #include "subscribe_m.h"
+#include "parameters.h"
 
 using namespace omnetpp;
 
@@ -29,7 +30,7 @@ void client::initialize()
 
       //Setup messaggio subscribe
       msg->setSrcId(this->getId());
-      msg->setTopic(intuniform(0, 5));
+      msg->setTopic(intuniform(0, N_TOPIC));
 
       //Invio
       send(msg, "gate$o",0);
