@@ -134,6 +134,7 @@ $O/broker.o: broker.cc \
 $O/broker_init_m.o: broker_init_m.cc \
 	broker_init_m.h
 $O/client.o: client.cc \
+	message_m.h \
 	parameters.h \
 	subscribe_m.h
 $O/message_m.o: message_m.cc \

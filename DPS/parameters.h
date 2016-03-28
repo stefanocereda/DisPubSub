@@ -5,11 +5,4 @@
  *      Author: stefano
  */
 
-#ifndef PARAMETERS_H_
-#define PARAMETERS_H_
-
-#define N_TOPIC 5
-
-
-
-#endif /* PARAMETERS_H_ */
+const int NTOPIC = 5;
