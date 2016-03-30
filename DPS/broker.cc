@@ -75,6 +75,7 @@ void broker::handleBrokerInitMessage(Broker_init_msg *m) {
     {
         int topic = subs_it -> first;
         Subscribe_msg *m = new Subscribe_msg("subscribe");
+        m->setSrcId(this->getId());
         m->setTopic(topic);
         send(m, "gate$o", channel);
     }
