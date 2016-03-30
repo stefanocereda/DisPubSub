@@ -17,6 +17,7 @@ using namespace omnetpp;
 class client: public cSimpleModule {
 private:
     std::vector<int> ts_vec;
+    std::vector<bool> my_subs;
 
     void sendMsg(int topic);
     void sendSub(int topic);
@@ -32,7 +33,7 @@ protected:
 
 public:
     client() :
-            ts_vec(NTOPIC) {
+            ts_vec(NTOPIC), my_subs(NTOPIC, false) {
     }
 };
 
@@ -46,6 +47,10 @@ void client::initialize() {
 
 //Subscribe to the given topic
 void client::sendSub(int topic) {
+    //save our interest
+    my_subs[topic] = true;
+
+    //and send
     Subscribe_msg *msg = new Subscribe_msg("subscribe");
     msg->setSrcId(this->getId());
     msg->setTopic(intuniform(0, NTOPIC));
@@ -81,14 +86,17 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
         sendMsg(intuniform(0, NTOPIC));
 }
 
-//TODO CHECK + KEEP MSG
 void client::handleMessageMessage(Message_msg *m){
 
     int topic = m->getTopic();
+
+    //if I am not interested exit
+    if (!my_subs[topic])
+        return;
+
+    //check the timestamp, if possible show the message, otherwise resend it as self message
     int ts = m->getTimestamp();
-
     int my_ts = ts_vec[topic];
-
     if (!(my_ts+1 < ts)){
         displayMessage(m);
         ts_vec[topic]++;

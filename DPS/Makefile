@@ -29,12 +29,12 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/broker.o $O/client.o $O/broker_init_m.o $O/message_m.o $O/subscribe_m.o
+OBJS = $O/client.o $O/broker.o $O/message_m.o $O/broker_init_m.o $O/subscribe_m.o
 
 # Message files
 MSGFILES = \
-    broker_init.msg \
     message.msg \
+    broker_init.msg \
     subscribe.msg
 
 # SM files
