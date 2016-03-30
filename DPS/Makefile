@@ -131,6 +131,7 @@ depend:
 $O/broker.o: broker.cc \
 	broker_init_m.h \
 	message_m.h \
+	parameters.h \
 	subscribe_m.h
 $O/broker_init_m.o: broker_init_m.cc \
 	broker_init_m.h
