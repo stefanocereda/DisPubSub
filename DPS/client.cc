@@ -20,8 +20,8 @@ private:
     std::vector<int> ts_vec;
     std::vector<bool> my_subs;
 
-    void sendMsg(int topic);
-    void sendSub(int topic);
+    void sendMsg(int topic, int delay);
+    void sendSub(int topic, int delay);
 
     void handleMessageMessage(Message_msg *m);
     void displayMessage(Message_msg *m);
@@ -48,7 +48,7 @@ void client::initialize() {
 }
 
 //Subscribe to the given topic
-void client::sendSub(int topic) {
+void client::sendSub(int topic, int delay) {
     //save our interest
     my_subs[topic] = true;
 
@@ -57,18 +57,18 @@ void client::sendSub(int topic) {
     msg->setSrcId(this->getId());
     msg->setTopic(topic);
 
-    send(msg, "gate$o", 0);
-    EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << random1 << "\n";
+    sendDelayed(msg, delay, "gate$o", 0);
+    EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << topic << "\n";
 }
 
 //Send a message for the given topic
-void client::sendMsg(int topic) {
+void client::sendMsg(int topic, int delay) {
     Message_msg *msg = new Message_msg("message");
     msg->setTopic(topic);
     msg->setTimestamp(++ts_vec[topic]);
 
-    sendDelayed(msg, 10, "gate$o", 0); //TODO spararli fuori a caso
-    EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << random2 << "\n";
+    sendDelayed(msg, delay, "gate$o", 0); //TODO spararli fuori a caso
+    EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << topic << "\n";
 }
 
 void client::sendLeave(){
@@ -89,15 +89,16 @@ void client::handleMessage(cMessage *msg) {
         }
 
 }
+
 void client::handleMessageBroker(Broker_init_msg *msg) {
-
-        //Send a random subscription
-        int random1 = intuniform(0, NTOPIC-1);
-        sendSub(random1);
-
-        //and send a random message
-        int random2 = intuniform(0, NTOPIC-1);
-        sendMsg(random2);
+    //We are attached to a new broker, send some subscriptions and some messages with random delays
+    for (int i = 0; i < N_SEND; i++)
+        if (rand()%100 <= SUBS_RATIO*100)
+            //send a sub
+            sendSub(intuniform(0, NTOPIC-1), intuniform(2, MAX_DELAY));
+        else
+            //send a publish
+            sendMsg(intuniform(0, NTOPIC-1), intuniform(1, MAX_DELAY));
 }
 
 void client::handleMessageMessage(Message_msg *m){
@@ -132,8 +133,8 @@ void client::handleMessageMessage(Message_msg *m){
 
 //TODO
 void client::displayMessage(Message_msg *m){
-    EV << "The client with id: " << this->getId() << " and with timestamp: " << my_ts
-            << " will display a message about topic: "<< topic
-            << " with timestamp: " << ts << "\n";
+    EV << "The client with id: " << this->getId() << " and with timestamp: " << ts_vec[m->getTopic()]
+            << " will display a message about topic: "<< m->getTopic()
+            << " with timestamp: " << m->getTimestamp() << "\n";
 }
 
