@@ -15,8 +15,15 @@
 #include "parameters.h"
 using namespace omnetpp;
 
+#define HUB_MODE 1
+#define NORMAL_EXE 0
+
 class broker: public cSimpleModule {
 private:
+
+    //States if the broker is up (0) or not (1)
+    int broker_hub_mode;
+
     //The broker needs to know on which channels it should send the various topics, mapping is topic -> list of interested channels
     typedef std::map<int, std::list<int>> SubscriptionTable;
     SubscriptionTable subs_table;
@@ -30,15 +37,17 @@ private:
     void handleSubscribeMessage(Subscribe_msg *m);
     void handleBrokerInitMessage(Broker_init_msg *m);
     void handleMessageMessage(Message_msg *m);
-    void handleClientLeaveMessage(Leave_msg *m);
+    void updateStatusLeave(Leave_msg *m);
     void handleBrokerLeaveMessage(Leave_msg *m);
-
+    void handleUnsubscribeMessage(Unsubscribe_msg *m);
     void sendBrokerLeaveMessage();
+    void broadcast(cMessage *m);
 
 protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
+
 public:
     broker() :
             subs_counter(NTOPIC) {
@@ -57,19 +66,31 @@ void broker::initialize() {
         msg->setSrcId(this->getId());
         send(msg, "gate$o", i);
     }
+
+    broker_hub_mode = NORMAL_EXE;
 }
 
 void broker::handleMessage(cMessage *msg) {
-    if (strcmp("subscribe", msg->getFullName()) == 0) {
-        handleSubscribeMessage(dynamic_cast<Subscribe_msg*>(msg));
-    } else if (strcmp("broker", msg->getFullName()) == 0) {
-        handleBrokerInitMessage(dynamic_cast<Broker_init_msg*>(msg));
-    } else if (strcmp("message", msg->getFullName()) == 0) {
-        handleMessageMessage(dynamic_cast<Message_msg*>(msg));
-    } else if(strcmp("client_leave", msg->getFullName()) == 0){
-        handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
-    } else if(strcmp("broker_leave", msg->getFullName()) == 0){
-        handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
+    // In the first case I'm operative as a broker
+    if(broker_hub_mode == 0){
+        if (strcmp("subscribe", msg->getFullName()) == 0) {
+            handleSubscribeMessage(dynamic_cast<Subscribe_msg*>(msg));
+        } else if (strcmp("broker", msg->getFullName()) == 0) {
+            handleBrokerInitMessage(dynamic_cast<Broker_init_msg*>(msg));
+        } else if (strcmp("message", msg->getFullName()) == 0) {
+            handleMessageMessage(dynamic_cast<Message_msg*>(msg));
+        } else if(strcmp("client_leave", msg->getFullName()) == 0){
+            updateStatusLeave(dynamic_cast<Leave_msg*>(msg));
+        } else if(strcmp("broker_leave", msg->getFullName()) == 0){
+            handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
+        } else if(strcmp("unsubscribe", msg->getFullName()) == 0){
+            handleUnsubscribeMessage(dynamic_cast<Unsubscribe_msg*>(msg));
+        }
+    }
+    else{ // In this case I work as hub
+        // I have to send the message to all the connected brokers except for the receiver
+        // TODO: Should I work in different manner based on the type of message???
+        broadcast(msg , msg->getArrivalGate()->getIndex());
     }
 }
 
@@ -151,12 +172,14 @@ void broker::handleMessageMessage(Message_msg *m) {
                     Message_msg *copy = (Message_msg *)m->dup();
                     send(copy, "gate$o", *chans_it);
                 }
-            }
+        }
     }
 
 }
 
-void broker::handleClientLeaveMessage(Leave_msg *m){
+void broker::updateStatusLeave(Leave_msg *m){
+    // After a leave_client,leave_broker update all the lists and maybe start an unsubscribe event.
+
     // Understand who is the leaver
     int in_chan = m->getArrivalGate()->getIndex();
 
@@ -176,19 +199,14 @@ void broker::handleClientLeaveMessage(Leave_msg *m){
                 chans_it = chans_list.erase(chans_it);
                 subs_counter[topics_it->first]--;
 
-                // If I have no more follower start an unsubscribe chain
+                // If I have no more follower I start a new unsubscribe chain
                 if(subs_counter[topics_it->first] == 0){
                     // Create a unsubscribe message referred to the current topic
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
                     // I have to broadcast the unsubscribe to all the channel except for the leaver that is chans_it
-                    for ( chans_unsub_it = chans_list.begin(), end_chan = chans_list.end();
-                            chans_unsub_it != end_unsub_end; ++chans_unsub_it) {
-                        if(!( in_chan == *chans_unsub_it)){
-                            send(unsubscribe , "gate$o" , *chans_unsub_it);
-                        }
-                    }
+                    broadcast(unsubscribe , chans_it);
                 }
             }
         }
@@ -196,17 +214,69 @@ void broker::handleClientLeaveMessage(Leave_msg *m){
 }
 
 void broker::sendBrokerLeaveMessage(){
-    // I send in broadcast to brokers that I'm leaving
+    // I send in broadcast to all the connected brokers that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
-    for(std::list<int>::const_iterator chans_it = broker_gate_table.begin() , end = broker_gate_table.end() ; end != chans_it ; ++chans_it){
-        Leave_msg *copy = leave->dup();
-        send(copy, "gate$o", *chans_it);
-    }
+
+    // The inverse may cause problem by still being in normal_exe even after the leave
+    broker_hub_mode = 1;
+    broadcast(leave,null);
+
 }
 
 
 void broker::handleBrokerLeaveMessage(Leave_msg *m){
-    handleClientLeaveMessage(m);
+    // It only update the status after the receiving of a leave by a broker
 
-    //
+    // TODO What if we merge it with the Client method that is updateStatusLeave ?
+    updateStatusLeave(m);
+
+}
+
+void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
+    // Handle the unsubscribe message as a leave on a specific topic
+
+    // Get the topic and the unsubscriber_channel from the message
+    int topic = m->getTopic();
+    int in_chan = m->getArrivalGate()->getIndex();
+
+    // Get the iterator referred on the topic of the message
+    SubscriptionTable::iterator topic_it = subs_table.find(topic);
+        // If is not empty
+        if (topic_it != subs_table.end()){
+            // I get the lists of subscribers to such a topic
+            std::list<int> chans_list = topic_it -> second;
+
+            // I basically iterate on such a lists of subscribers in order to find the one that unsubscribe and update the status
+            for (std::list<int>::const_iterator chans_it = chans_list.begin(), end = chans_list.end();
+                   chans_it != end; ++chans_it) {
+
+                // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
+                if(*chans_it == in_chan){
+                    chans_it = chans_list.erase(chans_it);
+                    subs_counter[topics_it->first]--;
+
+                    // If I have no more follower I continue the already started unsubscribe chain
+                    if(subs_counter[topics_it->first] == 0){
+                        // Create a unsubscribe message referred to the unsubscribe topic
+                        Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
+                        unsubscribe->setTopic(topic);
+
+                        broadcast(unsubscribe,in_chan);
+                    }
+                }
+            }
+        }
+
+}
+
+void broker::broadcast(cMessage *m , int except_channel){
+    // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
+
+    for (std::list<int>::const_iterator chans_it = broker_gate_table.begin(), end = broker_gate_table.end();
+           chans_it != end; ++chans_it) {
+            if(*chans_it != except_channel){
+                Message_msg *copy = (Message_msg *)m->dup();
+                send(copy, "gate$o", *chans_it);
+            }
+    }
 }
