@@ -82,6 +82,10 @@ void client::handleMessageMessage(Message_msg *m){
         displayMessage(m);
         ts_vec[topic]++;
     }
+    else
+    {
+        scheduleAt(simTime()+RESEND_TIMEOUT, m->dup());
+    }
 }
 
 //TODO
