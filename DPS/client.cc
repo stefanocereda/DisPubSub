@@ -78,8 +78,10 @@ void client::handleMessageMessage(Message_msg *m){
 
     int my_ts = ts_vec[topic];
 
-    if (my_ts == ts+1)
+    if (my_ts >= ts+1){
         displayMessage(m);
+        ts_vec[topic]++;
+    }
 }
 
 //TODO
