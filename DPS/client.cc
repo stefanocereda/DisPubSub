@@ -44,7 +44,6 @@ public:
 Define_Module(client);
 
 void client::initialize() {
-
     EV << this->getFullName() << " con id: " << this->getId() << "\n";
 }
 
@@ -59,6 +58,7 @@ void client::sendSub(int topic) {
     msg->setTopic(topic);
 
     send(msg, "gate$o", 0);
+    EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << random1 << "\n";
 }
 
 //Send a message for the given topic
@@ -68,6 +68,7 @@ void client::sendMsg(int topic) {
     msg->setTimestamp(++ts_vec[topic]);
 
     sendDelayed(msg, 10, "gate$o", 0); //TODO spararli fuori a caso
+    EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << random2 << "\n";
 }
 
 void client::sendLeave(){
@@ -75,6 +76,7 @@ void client::sendLeave(){
     leave->setSrcId(this->getId());
 
     send(leave , "gate$o" , 0);
+    EV << "The client with id: " << this->getId() << " left\n";
 }
 
 void client::handleMessage(cMessage *msg) {
@@ -93,12 +95,9 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
         int random1 = intuniform(0, NTOPIC-1);
         sendSub(random1);
 
-        EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << random1 << "\n";
-
         //and send a random message
         int random2 = intuniform(0, NTOPIC-1);
         sendMsg(random2);
-        EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << random2 << "\n";
 }
 
 void client::handleMessageMessage(Message_msg *m){
@@ -114,20 +113,13 @@ void client::handleMessageMessage(Message_msg *m){
     int my_ts = ts_vec[topic];
 
     if (!(my_ts + 1 < ts)){
-
-        EV << "The client with id: " << this->getId() << " and with timestamp: " << my_ts
-                << " will display a message about topic: "<< topic
-                << " with timestamp: " << ts << "\n";
-
         displayMessage(m);
 
         if(my_ts < ts){
             //Merge vector
             ts_vec[topic] = ts;
+            EV << "The client with id: " << this->getId() << " now has updated his timestamp to: " << ts_vec[topic];
         }
-
-
-        EV << "The client with id: " << this->getId() << " now has updated his timestamp to: " << ts_vec[topic];
     }
     else
     {
@@ -140,5 +132,8 @@ void client::handleMessageMessage(Message_msg *m){
 
 //TODO
 void client::displayMessage(Message_msg *m){
+    EV << "The client with id: " << this->getId() << " and with timestamp: " << my_ts
+            << " will display a message about topic: "<< topic
+            << " with timestamp: " << ts << "\n";
 }
 
