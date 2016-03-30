@@ -89,9 +89,6 @@ void client::handleMessageMessage(Message_msg *m){
 
     int my_ts = ts_vec[topic];
 
-    EV << "client " << this->getId() << " receives a msg with topic " << topic << " and ts " << ts << " and has ts: " << my_ts;
-
-
     if (!(my_ts+1 < ts)){
         displayMessage(m);
         ts_vec[topic]++;

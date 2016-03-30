@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <omnetpp.h>
 #include <string.h>
+#include "parameters.h"
 
 using namespace omnetpp;
 
@@ -18,6 +19,9 @@ private:
     //The broker needs to know on which channels it should send the various topics, mapping is topic -> list of interested channels
     typedef std::map<int, std::list<int>> SubscriptionTable;
     SubscriptionTable subs_table;
+
+    //Per each position-topic how many subscriptions
+    std::vector<int> subs_counter;
 
     //and where are the other brokers
     std::list<int> broker_gate_table;
@@ -30,6 +34,10 @@ protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
+public:
+    broker() :
+            subs_counter(NTOPIC) {
+    }
 };
 
 // The module class needs to be registered with OMNeT++
@@ -57,9 +65,19 @@ void broker::handleMessage(cMessage *msg) {
 }
 
 void broker::handleBrokerInitMessage(Broker_init_msg *m) {
-    //TODO: quando un nuovo broker si connette dovremmo mandargli tutte le nostre subscription
+    //add the broker to our list
     int channel = m->getArrivalGate()->getIndex();
     broker_gate_table.push_back(channel);
+
+    //and send it our subscription list
+    for (SubscriptionTable::const_iterator subs_it = subs_table.begin(), end = subs_table.end();
+            subs_it != end; ++subs_it)
+    {
+        int topic = subs_it -> first;
+        Subscribe_msg *m = new Subscribe_msg("subscribe");
+        m->setTopic(topic);
+        send(m, "gate$o", channel);
+    }
 }
 
 void broker::handleSubscribeMessage(Subscribe_msg *m) {
@@ -69,13 +87,17 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
     //check whether it is a new topic
     bool newTopic = false;
     SubscriptionTable::iterator it = subs_table.find(topic);
-    if (it == subs_table.end()) {
+
+    subs_counter[topic]++;
+    if (it == subs_table.end()) { // New topic
         newTopic = true;
         //build a new list
         std::list<int> toAdd;
         toAdd.push_back(channel);
         //and add to the table
         subs_table.insert(std::pair<int, std::list<int>>(topic, toAdd));
+
+
     } else {
         //otherwise get the current list of interested channels
         std::list<int> old = it->second;
