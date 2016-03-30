@@ -89,6 +89,9 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
     bool newTopic = false;
     SubscriptionTable::iterator it = subs_table.find(topic);
 
+    EV << "The broker with id: " << this->getId() << " received a subscribe for the topic: " << topic
+            << " from client with id: " << m->getSrcId() << "\n";
+
     subs_counter[topic]++;
     if (it == subs_table.end()) { // New topic
         newTopic = true;
