@@ -36,7 +36,7 @@ protected:
 
 public:
     client() :
-            ts_vec(NTOPIC), my_subs(NTOPIC, false) {
+            ts_vec(NTOPIC, 0), my_subs(NTOPIC, false) {
     }
 };
 
@@ -90,13 +90,13 @@ void client::handleMessage(cMessage *msg) {
 void client::handleMessageBroker(Broker_init_msg *msg) {
 
         //Send a random subscription
-        int random1 = intuniform(0, NTOPIC);
+        int random1 = intuniform(0, NTOPIC-1);
         sendSub(random1);
 
         EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << random1 << "\n";
 
         //and send a random message
-        int random2 = intuniform(0, NTOPIC);
+        int random2 = intuniform(0, NTOPIC-1);
         sendMsg(random2);
         EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << random2 << "\n";
 }

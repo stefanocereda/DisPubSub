@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for DPS
 #
 # This file was generated with the command:
-#  opp_makemake
+#  opp_makemake -f --deep -O out
 #
 
 # Name of target to be created (-o option)
@@ -30,18 +30,18 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
-    $O/broker.o \
     $O/client.o \
-    $O/broker_init_m.o \
-    $O/leave_m.o \
+    $O/broker.o \
     $O/message_m.o \
+    $O/leave_m.o \
+    $O/broker_init_m.o \
     $O/subscribe_m.o
 
 # Message files
 MSGFILES = \
-    broker_init.msg \
-    leave.msg \
     message.msg \
+    leave.msg \
+    broker_init.msg \
     subscribe.msg
 
 # SM files
@@ -136,22 +136,23 @@ depend:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/broker.o: broker.cc \
-  ./broker_init_m.h \
-  ./leave_m.h \
-  ./message_m.h \
-  ./parameters.h \
-  ./subscribe_m.h
+	broker_init_m.h \
+	leave_m.h \
+	message_m.h \
+	parameters.h \
+	subscribe_m.h
 $O/broker_init_m.o: broker_init_m.cc \
-  ./broker_init_m.h
+	broker_init_m.h
 $O/client.o: client.cc \
-  ./broker_init_m.h \
-  ./leave_m.h \
-  ./message_m.h \
-  ./parameters.h \
-  ./subscribe_m.h
+	broker_init_m.h \
+	leave_m.h \
+	message_m.h \
+	parameters.h \
+	subscribe_m.h
 $O/leave_m.o: leave_m.cc \
-  ./leave_m.h
+	leave_m.h
 $O/message_m.o: message_m.cc \
-  ./message_m.h
+	message_m.h
 $O/subscribe_m.o: subscribe_m.cc \
-  ./subscribe_m.h
+	subscribe_m.h
+
