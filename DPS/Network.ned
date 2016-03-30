@@ -23,7 +23,11 @@ simple broker
 network Network
 {    
     types:
-        channel Channel extends ned.DelayChannel
+        channel ChannelClient extends ned.DelayChannel
+        {
+            delay = 300ms;
+        }
+        channel ChannelBroker extends ned.DelayChannel
         {
             delay = 100ms;
         }
@@ -78,26 +82,26 @@ network Network
         }
     
     connections allowunconnected:
-	broker1.gate++ <--> Channel <--> client1.gate++;
-	broker1.gate++ <--> Channel <--> client2.gate++;
+	broker1.gate++ <--> ChannelClient <--> client1.gate++;
+	broker1.gate++ <--> ChannelClient <--> client2.gate++;
 	
-	broker2.gate++ <--> Channel <--> client3.gate++;
-	broker2.gate++ <--> Channel <--> client4.gate++;
+	broker2.gate++ <--> ChannelClient <--> client3.gate++;
+	broker2.gate++ <--> ChannelClient <--> client4.gate++;
 
-	broker4.gate++ <--> Channel <--> client5.gate++;
-	broker4.gate++ <--> Channel <--> client6.gate++;
+	broker4.gate++ <--> ChannelClient <--> client5.gate++;
+	broker4.gate++ <--> ChannelClient <--> client6.gate++;
 
-	broker5.gate++ <--> Channel <--> client7.gate++;
-	broker5.gate++ <--> Channel <--> client8.gate++;
+	broker5.gate++ <--> ChannelClient <--> client7.gate++;
+	broker5.gate++ <--> ChannelClient <--> client8.gate++;
 
-	broker6.gate++ <--> Channel <--> client9.gate++;
-	broker6.gate++ <--> Channel <--> client10.gate++;
+	broker6.gate++ <--> ChannelClient <--> client9.gate++;
+	broker6.gate++ <--> ChannelClient <--> client10.gate++;
 	
-	broker1.gate++ <--> Channel <--> broker2.gate++;
-	broker2.gate++ <--> Channel <--> broker3.gate++;
-	broker3.gate++ <--> Channel <--> broker4.gate++;
-	broker3.gate++ <--> Channel <--> broker5.gate++;
-	broker3.gate++ <--> Channel <--> broker6.gate++;
+	broker1.gate++ <--> ChannelBroker <--> broker2.gate++;
+	broker2.gate++ <--> ChannelBroker <--> broker3.gate++;
+	broker3.gate++ <--> ChannelBroker <--> broker4.gate++;
+	broker3.gate++ <--> ChannelBroker <--> broker5.gate++;
+	broker3.gate++ <--> ChannelBroker <--> broker6.gate++;
 	
 	//Broker 1
 //	broker1.out++ --> Channel --> client1.in;
