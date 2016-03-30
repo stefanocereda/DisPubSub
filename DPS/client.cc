@@ -48,7 +48,7 @@ void client::initialize() {
 void client::sendSub(int topic) {
     Subscribe_msg *msg = new Subscribe_msg("subscribe");
     msg->setSrcId(this->getId());
-    msg->setTopic(intuniform(0, NTOPIC));
+    msg->setTopic(topic);
 
     send(msg, "gate$o", 0);
 }
@@ -75,10 +75,15 @@ void client::handleMessage(cMessage *msg) {
 void client::handleMessageBroker(Broker_init_msg *msg) {
 
         //Send a random subscription
-        sendSub(intuniform(0, NTOPIC));
+        int random1 = intuniform(0, NTOPIC);
+        sendSub(random1);
+
+        EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << random1 << "\n";
 
         //and send a random message
-        sendMsg(intuniform(0, NTOPIC));
+        int random2 = intuniform(0, NTOPIC);
+        sendMsg(random2);
+        EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << random2 << "\n";
 }
 
 //TODO CHECK + KEEP MSG
@@ -89,13 +94,28 @@ void client::handleMessageMessage(Message_msg *m){
 
     int my_ts = ts_vec[topic];
 
-    if (!(my_ts+1 < ts)){
+    if (!(my_ts + 1 < ts)){
+
+        EV << "The client with id: " << this->getId() << " and with timestamp: " << my_ts
+                << " will display a message about topic: "<< topic
+                << " with timestamp: " << ts << "\n";
+
         displayMessage(m);
-        ts_vec[topic]++;
+
+        if(my_ts < ts){
+            //Merge vector
+            ts_vec[topic] = ts;
+        }
+
+
+        EV << "The client with id: " << this->getId() << " now has updated his timestamp to: " << ts_vec[topic];
     }
     else
     {
         scheduleAt(simTime()+RESEND_TIMEOUT, m->dup());
+        EV << "The client with id: " << this->getId() << " and with timestamp: " << my_ts
+                       << " will delay the shipment of a message about topic: "<< topic
+                       << " with timestamp: " << ts << " at time: " << simTime() + RESEND_TIMEOUT << "\n";
     }
 }
 

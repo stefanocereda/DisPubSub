@@ -7,5 +7,5 @@
 
 #include <omnetpp.h>
 
-const int NTOPIC = 5;
+const int NTOPIC = 2;
 const const_simtime_t RESEND_TIMEOUT = 1.0;
