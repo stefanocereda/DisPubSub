@@ -58,7 +58,8 @@ void client::sendSub(int topic, int delay) {
     msg->setTopic(topic);
 
     sendDelayed(msg, delay, "gate$o", 0);
-    EV << "The client with id: " << this->getId() << " sent a subscribe for the topic: " << topic << "\n";
+    EV << "The client with id: " << this->getId()
+              << " sent a subscribe for the topic: " << topic << "\n";
 }
 
 //Send a message for the given topic
@@ -68,14 +69,15 @@ void client::sendMsg(int topic, int delay) {
     msg->setTimestamp(++ts_vec[topic]);
 
     sendDelayed(msg, delay, "gate$o", 0); //TODO spararli fuori a caso
-    EV << "The client with id: " << this->getId() << " sent a publish for the topic: " << topic << "\n";
+    EV << "The client with id: " << this->getId()
+              << " sent a publish for the topic: " << topic << "\n";
 }
 
-void client::sendLeave(){
+void client::sendLeave() {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
 
-    send(leave , "gate$o" , 0);
+    send(leave, "gate$o", 0);
     EV << "The client with id: " << this->getId() << " left\n";
 }
 
@@ -86,22 +88,22 @@ void client::handleMessage(cMessage *msg) {
 
     if (strcmp("broker", msg->getFullName()) == 0) {
         handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
-        }
+    }
 
 }
 
 void client::handleMessageBroker(Broker_init_msg *msg) {
     //We are attached to a new broker, send some subscriptions and some messages with random delays
     for (int i = 0; i < N_SEND; i++)
-        if (rand()%100 <= SUBS_RATIO*100)
+        if (rand() % 100 <= SUBS_RATIO * 100)
             //send a sub
-            sendSub(intuniform(0, NTOPIC-1), intuniform(2, MAX_DELAY));
+            sendSub(intuniform(0, NTOPIC - 1), intuniform(2, MAX_DELAY));
         else
             //send a publish
-            sendMsg(intuniform(0, NTOPIC-1), intuniform(1, MAX_DELAY));
+            sendMsg(intuniform(0, NTOPIC - 1), intuniform(1, MAX_DELAY));
 }
 
-void client::handleMessageMessage(Message_msg *m){
+void client::handleMessageMessage(Message_msg *m) {
 
     int topic = m->getTopic();
 
@@ -113,28 +115,36 @@ void client::handleMessageMessage(Message_msg *m){
     int ts = m->getTimestamp();
     int my_ts = ts_vec[topic];
 
-    if (!(my_ts + 1 < ts)){
+    if (!(my_ts + 1 < ts)) {
         displayMessage(m);
 
-        if(my_ts < ts){
+        if (my_ts < ts) {
             //Merge vector
             ts_vec[topic] = ts;
-            EV << "The client with id: " << this->getId() << " now has updated his timestamp to: " << ts_vec[topic];
+            EV << "The client with id: " << this->getId()
+                      << " now has updated his timestamp to: " << ts_vec[topic];
         }
-    }
-    else
+    } else if (m->isSelfMessage()) {
+        //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
+        EV << "The client with id: " << this->getId() << " lost a message";
+        displayMessage(m);
+        ts_vec[topic] = ts;
+    } else //try to wait
     {
-        scheduleAt(simTime()+RESEND_TIMEOUT, m->dup());
-        EV << "The client with id: " << this->getId() << " and with timestamp: " << my_ts
-                       << " will delay the shipment of a message about topic: "<< topic
-                       << " with timestamp: " << ts << " at time: " << simTime() + RESEND_TIMEOUT << "\n";
+        scheduleAt(simTime() + RESEND_TIMEOUT, m->dup());
+        EV << "The client with id: " << this->getId() << " and with timestamp: "
+                  << my_ts
+                  << " will delay the shipment of a message about topic: "
+                  << topic << " with timestamp: " << ts << " at time: "
+                  << simTime() + RESEND_TIMEOUT << "\n";
     }
 }
 
 //TODO
-void client::displayMessage(Message_msg *m){
-    EV << "The client with id: " << this->getId() << " and with timestamp: " << ts_vec[m->getTopic()]
-            << " will display a message about topic: "<< m->getTopic()
-            << " with timestamp: " << m->getTimestamp() << "\n";
+void client::displayMessage(Message_msg *m) {
+    EV << "The client with id: " << this->getId() << " and with timestamp: "
+              << ts_vec[m->getTopic()]
+              << " will display a message about topic: " << m->getTopic()
+              << " with timestamp: " << m->getTimestamp() << "\n";
 }
 
