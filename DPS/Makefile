@@ -30,19 +30,21 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
-    $O/client.o \
     $O/broker.o \
-    $O/message_m.o \
-    $O/leave_m.o \
+    $O/client.o \
     $O/broker_init_m.o \
-    $O/subscribe_m.o
+    $O/leave_m.o \
+    $O/message_m.o \
+    $O/subscribe_m.o \
+    $O/unsubscribe_m.o
 
 # Message files
 MSGFILES = \
-    message.msg \
-    leave.msg \
     broker_init.msg \
-    subscribe.msg
+    leave.msg \
+    message.msg \
+    subscribe.msg \
+    unsubscribe.msg
 
 # SM files
 SMFILES =
@@ -140,7 +142,8 @@ $O/broker.o: broker.cc \
 	leave_m.h \
 	message_m.h \
 	parameters.h \
-	subscribe_m.h
+	subscribe_m.h \
+	unsubscribe_m.h
 $O/broker_init_m.o: broker_init_m.cc \
 	broker_init_m.h
 $O/client.o: client.cc \
@@ -155,4 +158,6 @@ $O/message_m.o: message_m.cc \
 	message_m.h
 $O/subscribe_m.o: subscribe_m.cc \
 	subscribe_m.h
+$O/unsubscribe_m.o: unsubscribe_m.cc \
+	unsubscribe_m.h
 

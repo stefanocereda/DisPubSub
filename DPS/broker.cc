@@ -6,13 +6,13 @@
  */
 #include "broker_init_m.h"
 #include "message_m.h"
+#include "unsubscribe_m.h"
 #include "subscribe_m.h"
 #include "leave_m.h"
 #include <algorithm>
 #include <omnetpp.h>
 #include <string.h>
 #include "parameters.h"
-
 using namespace omnetpp;
 
 class broker: public cSimpleModule {
@@ -31,6 +31,9 @@ private:
     void handleBrokerInitMessage(Broker_init_msg *m);
     void handleMessageMessage(Message_msg *m);
     void handleClientLeaveMessage(Leave_msg *m);
+    void handleBrokerLeaveMessage(Leave_msg *m);
+
+    void sendBrokerLeaveMessage();
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -64,6 +67,8 @@ void broker::handleMessage(cMessage *msg) {
     } else if (strcmp("message", msg->getFullName()) == 0) {
         handleMessageMessage(dynamic_cast<Message_msg*>(msg));
     } else if(strcmp("client_leave", msg->getFullName()) == 0){
+        handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
+    } else if(strcmp("broker_leave", msg->getFullName()) == 0){
         handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
     }
 }
@@ -156,12 +161,10 @@ void broker::handleClientLeaveMessage(Leave_msg *m){
     int in_chan = m->getArrivalGate()->getIndex();
 
     std::map<int, std::list<int>>::const_iterator topics_it,end_topic;
-    std::list<int>::const_iterator chans_it,end_chan;
-
+    std::list<int>::const_iterator chans_it,end_chan,chans_unsub_it,end_unsub_end;
 
     // Iterate on topics
     for (topics_it = subs_table.begin(), end_topic = subs_table.end();  topics_it != end_topic; ++topics_it) {
-
         std::list<int> chans_list = topics_it->second;
 
         // For each channel referred to the current topic
@@ -171,8 +174,39 @@ void broker::handleClientLeaveMessage(Leave_msg *m){
             // If the current channel is the leaver I have to remove it
             if(*chans_it == in_chan){
                 chans_it = chans_list.erase(chans_it);
+                subs_counter[topics_it->first]--;
+
+                // If I have no more follower start an unsubscribe chain
+                if(subs_counter[topics_it->first] == 0){
+                    // Create a unsubscribe message referred to the current topic
+                    Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
+                    unsubscribe->setTopic(topics_it->first);
+
+                    // I have to broadcast the unsubscribe to all the channel except for the leaver that is chans_it
+                    for ( chans_unsub_it = chans_list.begin(), end_chan = chans_list.end();
+                            chans_unsub_it != end_unsub_end; ++chans_unsub_it) {
+                        if(!( in_chan == *chans_unsub_it)){
+                            send(unsubscribe , "gate$o" , *chans_unsub_it);
+                        }
+                    }
+                }
             }
         }
     }
+}
 
+void broker::sendBrokerLeaveMessage(){
+    // I send in broadcast to brokers that I'm leaving
+    Leave_msg *leave = new Leave_msg("broker_leave");
+    for(std::list<int>::const_iterator chans_it = broker_gate_table.begin() , end = broker_gate_table.end() ; end != chans_it ; ++chans_it){
+        Leave_msg *copy = leave->dup();
+        send(copy, "gate$o", *chans_it);
+    }
+}
+
+
+void broker::handleBrokerLeaveMessage(Leave_msg *m){
+    handleClientLeaveMessage(m);
+
+    //
 }
