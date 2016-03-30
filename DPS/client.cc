@@ -10,6 +10,7 @@
 #include "subscribe_m.h"
 #include "parameters.h"
 #include "message_m.h"
+#include "leave_m.h"
 
 using namespace omnetpp;
 
@@ -22,6 +23,8 @@ private:
 
     void handleMessageMessage(Message_msg *m);
     void displayMessage(Message_msg *m);
+
+    void sendLeave();
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -63,6 +66,13 @@ void client::sendMsg(int topic) {
     msg->setTimestamp(++ts_vec[topic]);
 
     sendDelayed(msg, 10, "gate$o", 0); //TODO spararli fuori a caso
+}
+
+void client::sendLeave(){
+    Leave_msg *leave = new Leave_msg("client_leave");
+    leave->setSrcId(this->getId());
+
+    send(leave , "gate$o" , 0);
 }
 
 void client::handleMessage(cMessage *msg) {

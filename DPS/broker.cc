@@ -7,6 +7,7 @@
 #include "broker_init_m.h"
 #include "message_m.h"
 #include "subscribe_m.h"
+#include "leave_m.h"
 #include <algorithm>
 #include <omnetpp.h>
 #include <string.h>
@@ -25,6 +26,7 @@ private:
     void handleSubscribeMessage(Subscribe_msg *m);
     void handleBrokerInitMessage(Broker_init_msg *m);
     void handleMessageMessage(Message_msg *m);
+    void handleClientLeaveMessage(Leave_msg *m);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -53,6 +55,8 @@ void broker::handleMessage(cMessage *msg) {
         handleBrokerInitMessage(dynamic_cast<Broker_init_msg*>(msg));
     } else if (strcmp("message", msg->getFullName()) == 0) {
         handleMessageMessage(dynamic_cast<Message_msg*>(msg));
+    } else if(strcmp("client_leave", msg->getFullName()) == 0){
+        handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
     }
 }
 
@@ -121,3 +125,28 @@ void broker::handleMessageMessage(Message_msg *m) {
 
 }
 
+void broker::handleClientLeaveMessage(Leave_msg *m){
+    // Understand who is the leaver
+    int in_chan = m->getArrivalGate()->getIndex();
+
+    std::map<int, std::list<int>>::const_iterator topics_it,end_topic;
+    std::list<int>::const_iterator chans_it,end_chan;
+
+
+    // Iterate on topics
+    for (topics_it = subs_table.begin(), end_topic = subs_table.end();  topics_it != end_topic; ++topics_it) {
+
+        std::list<int> chans_list = topics_it->second;
+
+        // For each channel referred to the current topic
+        for ( chans_it = chans_list.begin(), end_chan = chans_list.end();
+                       chans_it != end_chan; ++chans_it) {
+
+            // If the current channel is the leaver I have to remove it
+            if(*chans_it == in_chan){
+                chans_it = chans_list.erase(chans_it);
+            }
+        }
+    }
+
+}
