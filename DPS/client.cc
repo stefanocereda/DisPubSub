@@ -73,12 +73,16 @@ void client::handleMessage(cMessage *msg) {
 
 //TODO CHECK + KEEP MSG
 void client::handleMessageMessage(Message_msg *m){
+
     int topic = m->getTopic();
     int ts = m->getTimestamp();
 
     int my_ts = ts_vec[topic];
 
-    if (my_ts >= ts+1){
+    EV << "client " << this->getId() << " receives a msg with topic " << topic << " and ts " << ts << " and has ts: " << my_ts;
+
+
+    if (!(my_ts+1 < ts)){
         displayMessage(m);
         ts_vec[topic]++;
     }
@@ -90,6 +94,5 @@ void client::handleMessageMessage(Message_msg *m){
 
 //TODO
 void client::displayMessage(Message_msg *m){
-    EV << "client " << this->getId() << " has vector and shows a msg with topic " << m->getTopic() << " and ts " << m->getTimestamp();
 }
 
