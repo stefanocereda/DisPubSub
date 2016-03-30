@@ -10,6 +10,7 @@
 #include "subscribe_m.h"
 #include "parameters.h"
 #include "message_m.h"
+#include "broker_init_m.h"
 
 using namespace omnetpp;
 
@@ -22,6 +23,7 @@ private:
 
     void handleMessageMessage(Message_msg *m);
     void displayMessage(Message_msg *m);
+    void handleMessageBroker(Broker_init_msg *msg);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -38,13 +40,8 @@ public:
 Define_Module(client);
 
 void client::initialize() {
+
     EV << this->getFullName() << " con id: " << this->getId() << "\n";
-
-    //Send a random subscription
-    sendSub(intuniform(0, NTOPIC));
-
-    //and send a random message
-    sendMsg(intuniform(0, NTOPIC));
 }
 
 //Subscribe to the given topic
@@ -69,6 +66,19 @@ void client::handleMessage(cMessage *msg) {
     if (strcmp("message", msg->getFullName()) == 0) {
         handleMessageMessage(dynamic_cast<Message_msg*>(msg));
     }
+
+    if (strcmp("broker", msg->getFullName()) == 0) {
+        handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
+        }
+
+}
+void client::handleMessageBroker(Broker_init_msg *msg) {
+
+        //Send a random subscription
+        sendSub(intuniform(0, NTOPIC));
+
+        //and send a random message
+        sendMsg(intuniform(0, NTOPIC));
 }
 
 //TODO CHECK + KEEP MSG
