@@ -1,10 +1,5 @@
- Mandiamo + messaggi => forwarding delle subscription
+quando un client si connette da capo, deve ricevere i messaggi vecchi? Se si, dove li prende? Se no, come inizializza il vettore?
 
- Vettore = una posizione per argomento. Quando si manda un messaggio si incrementa la posizione corrispondente. Quando si riceve si mostra solo nel momento giusto: se il mio vettore è 00 e arriva un messaggio con 01 aspetto a mostrarlo finché mi arriva il messaggio 01.
+finire le leave
 
- Quando qualcuno se ne va se è un client fottesega, se è un broker manda la sua routing table a un altro broker.
-
- I broker/client sono fissi o un client può diventare broker? => NO SONO FISSI
-
-
- NUOVO PROBLEMA: quando un client si connette da capo, deve ricevere i messaggi vecchi? Se si, dove li prende? Se no, come inizializza il vettore?
+mandare sub/publish/leave a caso
