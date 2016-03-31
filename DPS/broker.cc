@@ -61,7 +61,7 @@ Define_Module(broker);
 void broker::initialize() {
     int n = gateSize("gate");
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {// Broadcast
         Broker_init_msg *msg = new Broker_init_msg("broker");
         msg->setSrcId(this->getId());
         send(msg, "gate$o", i);
@@ -89,7 +89,9 @@ void broker::handleMessage(cMessage *msg) {
     }
     else{ // In this case I work as hub
         // I have to send the message to all the connected brokers except for the receiver
+
         // TODO: Should I work in different manner based on the type of message???
+        // TODO: May I need a list of all the gates ? in order to broadcast messages also to clients.... and not only to brokers.
         broadcast(msg , msg->getArrivalGate()->getIndex());
     }
 }
@@ -206,6 +208,7 @@ void broker::updateStatusLeave(Leave_msg *m){
                     unsubscribe->setTopic(topics_it->first);
 
                     // I have to broadcast the unsubscribe to all the channel except for the leaver that is chans_it
+                    // non dovrebbe mandarle anceh ai nodi client ? altrimenti questi stanno fregati e non riceveranno più nulla
                     broadcast(unsubscribe , chans_it);
                 }
             }
@@ -218,7 +221,7 @@ void broker::sendBrokerLeaveMessage(){
     Leave_msg *leave = new Leave_msg("broker_leave");
 
     // The inverse may cause problem by still being in normal_exe even after the leave
-    broker_hub_mode = 1;
+    broker_hub_mode = HUB_MODE;
     broadcast(leave,null);
 
 }
