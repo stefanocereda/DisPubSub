@@ -216,7 +216,7 @@ void broker::updateStatusLeave(Leave_msg *m){
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
-                    EV << "Broker with id " << this->getId() << " unsubscribe to the current topic";
+                    EV << "Broker with id " << this->getId() << " unsubscribe to the topic " << topics_it->first;
                     broadcast(unsubscribe , *chans_it , ONLY_BROKERS);
                 }
             }
@@ -272,6 +272,8 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
                         // Create a unsubscribe message referred to the unsubscribe topic
                         Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                         unsubscribe->setTopic(topic);
+
+                        EV << "Broker with id " << this->getId() << " continue the unsubscribe chain for " << topics_it->first;
 
                         // Send it in broadcast to only the connected brokers
                         broadcast(unsubscribe,in_chan,ONLY_BROKERS);
