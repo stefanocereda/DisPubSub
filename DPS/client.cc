@@ -20,6 +20,8 @@ private:
     std::vector<int> ts_vec;
     std::vector<bool> my_subs;
 
+    int numSubs, numPubs, wrongDispatch, displayed, rescheduled, skipped = 0;
+
     void sendMsg(int topic, int delay);
     void sendSub(int topic, int delay);
 
@@ -33,6 +35,7 @@ protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
 
 public:
     client() :
@@ -44,7 +47,7 @@ public:
 Define_Module(client);
 
 void client::initialize() {
-    EV << this->getFullName() << " con id: " << this->getId() << "\n";
+    EV << this->getFullName() << " has id: " << this->getId() << "\n";
 }
 
 //Subscribe to the given topic
@@ -60,6 +63,7 @@ void client::sendSub(int topic, int delay) {
     sendDelayed(msg, delay, "gate$o", 0);
     EV << "The client with id: " << this->getId()
               << " sent a subscribe for the topic: " << topic << "\n";
+    numSubs++;
 }
 
 //Send a message for the given topic
@@ -68,9 +72,10 @@ void client::sendMsg(int topic, int delay) {
     msg->setTopic(topic);
     msg->setTimestamp(++ts_vec[topic]);
 
-    sendDelayed(msg, delay, "gate$o", 0); //TODO spararli fuori a caso
+    sendDelayed(msg, delay, "gate$o", 0);
     EV << "The client with id: " << this->getId()
               << " sent a publish for the topic: " << topic << "\n";
+    numPubs++;
 }
 
 void client::sendLeave() {
@@ -103,16 +108,17 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
             sendMsg(intuniform(0, NTOPIC - 1), intuniform(1, MAX_DELAY));
     //TODO estrarre probabilità
     //se > X
-        //sendDelayed(leave, delay a caso)
+    //sendDelayed(leave, delay a caso)
 }
 
 void client::handleMessageMessage(Message_msg *m) {
-
     int topic = m->getTopic();
 
     //if I am not interested exit
-    if (!my_subs[topic])
+    if (!my_subs[topic]) {
+        wrongDispatch++;
         return;
+    }
 
     //check the timestamp, if possible show the message, otherwise resend it as self message
     int ts = m->getTimestamp();
@@ -129,8 +135,10 @@ void client::handleMessageMessage(Message_msg *m) {
         }
     } else if (m->isSelfMessage()) {
         //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
-        EV << "The client with id: " << this->getId() << " lost a message";
+        EV << "The client with id: " << this->getId() << " lost "
+                  << ts - ts_vec[topic] << " messages";
         displayMessage(m);
+        skipped += ts - ts_vec[topic];
         ts_vec[topic] = ts;
     } else //try to wait
     {
@@ -140,14 +148,32 @@ void client::handleMessageMessage(Message_msg *m) {
                   << " will delay the shipment of a message about topic: "
                   << topic << " with timestamp: " << ts << " at time: "
                   << simTime() + RESEND_TIMEOUT << "\n";
+        rescheduled++;
     }
 }
 
-//TODO
 void client::displayMessage(Message_msg *m) {
     EV << "The client with id: " << this->getId() << " and with timestamp: "
               << ts_vec[m->getTopic()]
               << " will display a message about topic: " << m->getTopic()
               << " with timestamp: " << m->getTimestamp() << "\n";
+    displayed++;
+}
+
+void client::finish()
+{
+    //TODO
+    // This function is called by OMNeT++ at the end of the simulation.
+    EV << "Sent:     " << numSent << endl;
+    EV << "Received: " << numReceived << endl;
+    EV << "Hop count, min:    " << hopCountStats.getMin() << endl;
+    EV << "Hop count, max:    " << hopCountStats.getMax() << endl;
+    EV << "Hop count, mean:   " << hopCountStats.getMean() << endl;
+    EV << "Hop count, stddev: " << hopCountStats.getStddev() << endl;
+
+    recordScalar("#sent", numSent);
+    recordScalar("#received", numReceived);
+
+    hopCountStats.recordAs("hop count");
 }
 
