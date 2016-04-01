@@ -21,6 +21,10 @@ using namespace omnetpp;
 #define ONLY_BROKERS 0
 #define ALL_GATES 1
 
+
+#define LEAVE_PROBABILITY 0.1
+#define LEAVE_DELAY 10
+
 class broker: public cSimpleModule {
 private:
 
@@ -68,6 +72,11 @@ void broker::initialize() {
         Broker_init_msg *msg = new Broker_init_msg("broker");
         msg->setSrcId(this->getId());
         send(msg, "gate$o", i);
+    }
+
+
+    if( rand() % 100 <= LEAVE_PROBABILITY * 100){
+        sendBrokerLeaveMessage();
     }
 
     broker_hub_mode = NORMAL_EXE;
@@ -217,6 +226,8 @@ void broker::updateStatusLeave(Leave_msg *m){
 void broker::sendBrokerLeaveMessage(){
     // I send in broadcast to all the connected brokers that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
+
+    EV << "The Broker with id: " << this->getId() << " has LEFT the network!";
 
     // The inverse may cause problem by still being in normal_exe even after the leave
     broker_hub_mode = HUB_MODE;

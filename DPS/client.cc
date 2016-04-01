@@ -13,6 +13,12 @@
 #include "broker_init_m.h"
 #include "leave_m.h"
 
+// How frequently a leave occurs
+#define LEAVE_PROBABILITY 0.1
+
+// How long to send a leave after it starts
+#define LEAVE_DELAY 10
+
 using namespace omnetpp;
 
 class client: public cSimpleModule {
@@ -77,8 +83,8 @@ void client::sendLeave() {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
 
-    send(leave, "gate$o", 0);
-    EV << "The client with id: " << this->getId() << " left\n";
+    sendDelayed(leave, LEAVE_DELAY , "gate$o", 0);
+    EV << "The client with id: " << this->getId() << " has LEFT this network! \n";
 }
 
 void client::handleMessage(cMessage *msg) {
@@ -101,9 +107,11 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
         else
             //send a publish
             sendMsg(intuniform(0, NTOPIC - 1), intuniform(1, MAX_DELAY));
-    //TODO estrarre probabilità
-    //se > X
-        //sendDelayed(leave, delay a caso)
+
+    if( rand() % 100 <= LEAVE_PROBABILITY * 100){
+        sendLeave();
+    }
+
 }
 
 void client::handleMessageMessage(Message_msg *m) {
