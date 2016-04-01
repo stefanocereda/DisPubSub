@@ -238,22 +238,28 @@ void broker::updateStatusLeave(Leave_msg *m){
 
 
 void broker::handleClientJoinMessage(Join_msg *m){
-
+    // TODO
 }
 
 void broker::sendBrokerJoinMessage(){
+    // I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
+    Leave_msg *join = new Join_msg("broker_join");
 
+    EV << "The Broker with id: " << this->getId() << " has join again the network! \n";
+
+    broker_hub_mode = NORMAL_EXE;
+    broadcast(leave, ALL_GATES ,ONLY_BROKERS);
 }
 
 void broker::sendBrokerLeaveMessage(){
-    // I send in broadcast to all the connected brokers that I'm leaving and then I pass to the hub_mode
+    // I send in broadcast to all the connected brokers and clients that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
 
     EV << "The Broker with id: " << this->getId() << " has LEFT the network!";
 
     // The inverse may cause problem by still being in normal_exe even after the leave
     broker_hub_mode = HUB_MODE;
-    broadcast(leave, -1 ,ONLY_BROKERS);
+    broadcast(leave, ALL_GATES ,ONLY_BROKERS);
 
 }
 
@@ -266,7 +272,7 @@ void broker::handleBrokerLeaveMessage(Leave_msg *m){
 }
 
 void broker::handleBrokerJoinMessage(Join_msg *m){
-
+    //TODO
 }
 
 void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
@@ -306,7 +312,6 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
                 }
             }
         }
-
 }
 
 void broker::broadcast(cMessage *m , int except_channel , int mode){
@@ -333,3 +338,5 @@ void broker::broadcast(cMessage *m , int except_channel , int mode){
     }
 
 }
+
+// TODO: how to manage critical rides!?

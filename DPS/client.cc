@@ -16,6 +16,8 @@
 
 #define LEAVE_PROBABILITY 0.1
 #define LEAVE_DELAY 10
+#define JOIN_PROBABILITY 0.1
+#define JOIN_DELAY 10
 
 #define ON 1
 #define OFF 0
@@ -82,6 +84,16 @@ void client::sendMsg(int topic, int delay) {
     sendDelayed(msg, delay, "gate$o", 0); //TODO spararli fuori a caso
     EV << "The client with id: " << this->getId()
               << " sent a publish for the topic: " << topic << "\n";
+}
+
+void client::sendJoin(){
+    Join_msg *join = new Join_msg("client_join");
+    join->setSrcId(this->getId());
+
+    sendDelayed(join, JOIN_DELAY , "gate$o" , 0);
+    EV << "The client with id: " << this->getId() << " has JOIN the connected broker again! \n";
+
+    working_modality = ON;
 }
 
 void client::sendLeave() {
