@@ -101,6 +101,9 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
         else
             //send a publish
             sendMsg(intuniform(0, NTOPIC - 1), intuniform(1, MAX_DELAY));
+    //TODO estrarre probabilità
+    //se > X
+        //sendDelayed(leave, delay a caso)
 }
 
 void client::handleMessageMessage(Message_msg *m) {
