@@ -18,6 +18,9 @@ using namespace omnetpp;
 #define HUB_MODE 1
 #define NORMAL_EXE 0
 
+#define ONLY_BROKERS 0
+#define ALL_GATES 1
+
 class broker: public cSimpleModule {
 private:
 
@@ -41,7 +44,7 @@ private:
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleUnsubscribeMessage(Unsubscribe_msg *m);
     void sendBrokerLeaveMessage();
-    void broadcast(cMessage *m);
+    void broadcast(cMessage *m , int except_channel , int mode);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -88,11 +91,8 @@ void broker::handleMessage(cMessage *msg) {
         }
     }
     else{ // In this case I work as hub
-        // I have to send the message to all the connected brokers except for the receiver
-
-        // TODO: Should I work in different manner based on the type of message???
-        // TODO: May I need a list of all the gates ? in order to broadcast messages also to clients.... and not only to brokers.
-        broadcast(msg , msg->getArrivalGate()->getIndex());
+        // I have to send the message to all the connected brokers and clients except for the receiver
+        broadcast(msg , msg->getArrivalGate()->getIndex() , ALL_GATES);
     }
 }
 
@@ -207,9 +207,7 @@ void broker::updateStatusLeave(Leave_msg *m){
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
-                    // I have to broadcast the unsubscribe to all the channel except for the leaver that is chans_it
-                    // non dovrebbe mandarle anceh ai nodi client ? altrimenti questi stanno fregati e non riceveranno più nulla
-                    broadcast(unsubscribe , chans_it);
+                    broadcast(unsubscribe , *chans_it , ONLY_BROKERS);
                 }
             }
         }
@@ -222,7 +220,7 @@ void broker::sendBrokerLeaveMessage(){
 
     // The inverse may cause problem by still being in normal_exe even after the leave
     broker_hub_mode = HUB_MODE;
-    broadcast(leave,null);
+    broadcast(leave, -1 ,ONLY_BROKERS);
 
 }
 
@@ -230,7 +228,6 @@ void broker::sendBrokerLeaveMessage(){
 void broker::handleBrokerLeaveMessage(Leave_msg *m){
     // It only update the status after the receiving of a leave by a broker
 
-    // TODO What if we merge it with the Client method that is updateStatusLeave ?
     updateStatusLeave(m);
 
 }
@@ -256,15 +253,16 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
                 // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
                 if(*chans_it == in_chan){
                     chans_it = chans_list.erase(chans_it);
-                    subs_counter[topics_it->first]--;
+                    subs_counter[topic_it->first]--;
 
                     // If I have no more follower I continue the already started unsubscribe chain
-                    if(subs_counter[topics_it->first] == 0){
+                    if(subs_counter[topic_it->first] == 0){
                         // Create a unsubscribe message referred to the unsubscribe topic
                         Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                         unsubscribe->setTopic(topic);
 
-                        broadcast(unsubscribe,in_chan);
+                        // Send it in broadcast to only the connected brokers
+                        broadcast(unsubscribe,in_chan,ONLY_BROKERS);
                     }
                 }
             }
@@ -272,14 +270,27 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
 
 }
 
-void broker::broadcast(cMessage *m , int except_channel){
+void broker::broadcast(cMessage *m , int except_channel , int mode){
     // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
 
-    for (std::list<int>::const_iterator chans_it = broker_gate_table.begin(), end = broker_gate_table.end();
+    if( mode == ONLY_BROKERS ){
+        for (std::list<int>::const_iterator chans_it = broker_gate_table.begin(), end = broker_gate_table.end();
            chans_it != end; ++chans_it) {
             if(*chans_it != except_channel){
                 Message_msg *copy = (Message_msg *)m->dup();
                 send(copy, "gate$o", *chans_it);
             }
+        }
+    }else{ // RealBroadcast that is to all the gates/channels
+        // get the number of gates
+        int n = gateSize("gate");
+
+        for (int i = 0; i < n; i++) {
+            if( i != except_channel ){
+                Message_msg *copy = (Message_msg *)m->dup();
+                send(copy, "gate$o", i);
+            }
+        }
     }
+
 }
