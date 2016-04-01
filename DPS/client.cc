@@ -41,6 +41,8 @@ private:
     void sendJoin();
     void sendLeave();
 
+    void bundleCycle();
+
 protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
@@ -104,6 +106,17 @@ void client::sendLeave() {
     EV << "The client with id: " << this->getId() << " has LEFT this network! \n";
 
     working_modality = OFF;
+
+    bundleCycle();
+}
+
+void client::bundleCycle(){
+    while(-1){
+        if( rand() % 100 <= JOIN_PROBABILITY * 100){
+            sendJoin();
+            return;
+        }
+    }
 }
 
 void client::handleMessage(cMessage *msg) {
@@ -177,4 +190,9 @@ void client::displayMessage(Message_msg *m) {
               << " will display a message about topic: " << m->getTopic()
               << " with timestamp: " << m->getTimestamp() << "\n";
 }
+
+
+//TODO: How to set it off, only with the working_modality or I have to add some if statements to check it!? (in my opinion th esecond)
+// even if the broker should know it.. but what if the broker is a hub? I still receive messages and I will elaborate them....
+// What do I have to modify to do this prevention?
 
