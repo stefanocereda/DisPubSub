@@ -216,6 +216,7 @@ void broker::updateStatusLeave(Leave_msg *m){
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
+                    EV << "Broker with id " << this->getId() << " unsubscribe to the current topic";
                     broadcast(unsubscribe , *chans_it , ONLY_BROKERS);
                 }
             }
