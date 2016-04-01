@@ -12,17 +12,20 @@
 #include "message_m.h"
 #include "broker_init_m.h"
 #include "leave_m.h"
+#include "join_m.h"
 
-// How frequently a leave occurs
 #define LEAVE_PROBABILITY 0.1
-
-// How long to send a leave after it starts
 #define LEAVE_DELAY 10
+
+#define ON 1
+#define OFF 0
 
 using namespace omnetpp;
 
 class client: public cSimpleModule {
 private:
+    int working_modality;
+
     std::vector<int> ts_vec;
     std::vector<bool> my_subs;
 
@@ -33,6 +36,7 @@ private:
     void displayMessage(Message_msg *m);
     void handleMessageBroker(Broker_init_msg *msg);
 
+    void sendJoin();
     void sendLeave();
 
 protected:
@@ -51,6 +55,7 @@ Define_Module(client);
 
 void client::initialize() {
     EV << this->getFullName() << " con id: " << this->getId() << "\n";
+    working_modality = ON;
 }
 
 //Subscribe to the given topic
@@ -85,6 +90,8 @@ void client::sendLeave() {
 
     sendDelayed(leave, LEAVE_DELAY , "gate$o", 0);
     EV << "The client with id: " << this->getId() << " has LEFT this network! \n";
+
+    working_modality = OFF;
 }
 
 void client::handleMessage(cMessage *msg) {

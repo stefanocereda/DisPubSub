@@ -9,21 +9,26 @@
 #include "unsubscribe_m.h"
 #include "subscribe_m.h"
 #include "leave_m.h"
+#include "join_m.h"
 #include <algorithm>
 #include <omnetpp.h>
 #include <string.h>
 #include "parameters.h"
 using namespace omnetpp;
 
+// Broker working modalities
 #define HUB_MODE 1
 #define NORMAL_EXE 0
 
+// Broadcast function modalities
 #define ONLY_BROKERS 0
 #define ALL_GATES 1
 
-
+// Leave and Join probabilities and delays
 #define LEAVE_PROBABILITY 0.1
 #define LEAVE_DELAY 10
+#define JOIN_PROBABILITY 0.1
+#define JOIND_DELAY 10
 
 class broker: public cSimpleModule {
 private:
@@ -45,9 +50,12 @@ private:
     void handleBrokerInitMessage(Broker_init_msg *m);
     void handleMessageMessage(Message_msg *m);
     void updateStatusLeave(Leave_msg *m);
+    void handleClientJoinMessage(Join_msg *m);
     void handleBrokerLeaveMessage(Leave_msg *m);
+    void handleBrokerJoinMessage(Join_msg *m);
     void handleUnsubscribeMessage(Unsubscribe_msg *m);
     void sendBrokerLeaveMessage();
+    void sendBrokerJoinMessage();
     void broadcast(cMessage *m , int except_channel , int mode);
 
 protected:
@@ -93,8 +101,12 @@ void broker::handleMessage(cMessage *msg) {
             handleMessageMessage(dynamic_cast<Message_msg*>(msg));
         } else if(strcmp("client_leave", msg->getFullName()) == 0){
             updateStatusLeave(dynamic_cast<Leave_msg*>(msg));
+        } else if(strcmp("client_join", msg->getFullName()) == 0){
+            handleClientJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if(strcmp("broker_leave", msg->getFullName()) == 0){
             handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
+        } else if(strcmp("broker_join", msg->getFullName()) == 0){
+            handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if(strcmp("unsubscribe", msg->getFullName()) == 0){
             handleUnsubscribeMessage(dynamic_cast<Unsubscribe_msg*>(msg));
         }
@@ -224,6 +236,15 @@ void broker::updateStatusLeave(Leave_msg *m){
     }
 }
 
+
+void broker::handleClientJoinMessage(Join_msg *m){
+
+}
+
+void broker::sendBrokerJoinMessage(){
+
+}
+
 void broker::sendBrokerLeaveMessage(){
     // I send in broadcast to all the connected brokers that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
@@ -241,6 +262,10 @@ void broker::handleBrokerLeaveMessage(Leave_msg *m){
     // It only update the status after the receiving of a leave by a broker
 
     updateStatusLeave(m);
+
+}
+
+void broker::handleBrokerJoinMessage(Join_msg *m){
 
 }
 
@@ -273,7 +298,7 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
                         Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                         unsubscribe->setTopic(topic);
 
-                        EV << "Broker with id " << this->getId() << " continue the unsubscribe chain for " << topics_it->first;
+                        EV << "Broker with id " << this->getId() << " continue the unsubscribe chain for " << topic_it->first;
 
                         // Send it in broadcast to only the connected brokers
                         broadcast(unsubscribe,in_chan,ONLY_BROKERS);
