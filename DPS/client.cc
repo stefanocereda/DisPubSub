@@ -7,6 +7,7 @@
 #include <string.h>
 #include <omnetpp.h>
 #include <vector>
+#include <boost/format.hpp>
 #include "subscribe_m.h"
 #include "parameters.h"
 #include "message_m.h"
@@ -20,7 +21,12 @@ private:
     std::vector<int> ts_vec;
     std::vector<bool> my_subs;
 
-    int numSubs, numPubs, wrongDispatch, displayed, rescheduled, skipped = 0;
+    int numSubs = 0,
+        numPubs = 0,
+        wrongDispatch = 0,
+        displayed = 0,
+        rescheduled = 0,
+        skipped = 0;
 
     void sendMsg(int topic, int delay);
     void sendSub(int topic, int delay);
@@ -47,7 +53,7 @@ public:
 Define_Module(client);
 
 void client::initialize() {
-    EV << this->getFullName() << " has id: " << this->getId() << "\n";
+    EV << this->getFullName() << " has id: " << this->getId() << endl;
 }
 
 //Subscribe to the given topic
@@ -62,7 +68,7 @@ void client::sendSub(int topic, int delay) {
 
     sendDelayed(msg, delay, "gate$o", 0);
     EV << "The client with id: " << this->getId()
-              << " sent a subscribe for the topic: " << topic << "\n";
+              << " sent a subscribe for the topic: " << topic << endl;
     numSubs++;
 }
 
@@ -74,7 +80,7 @@ void client::sendMsg(int topic, int delay) {
 
     sendDelayed(msg, delay, "gate$o", 0);
     EV << "The client with id: " << this->getId()
-              << " sent a publish for the topic: " << topic << "\n";
+              << " sent a publish for the topic: " << topic << endl;
     numPubs++;
 }
 
@@ -117,6 +123,7 @@ void client::handleMessageMessage(Message_msg *m) {
     //if I am not interested exit
     if (!my_subs[topic]) {
         wrongDispatch++;
+        EV << "wrong";
         return;
     }
 
@@ -147,7 +154,7 @@ void client::handleMessageMessage(Message_msg *m) {
                   << my_ts
                   << " will delay the shipment of a message about topic: "
                   << topic << " with timestamp: " << ts << " at time: "
-                  << simTime() + RESEND_TIMEOUT << "\n";
+                  << simTime() + RESEND_TIMEOUT << endl;
         rescheduled++;
     }
 }
@@ -156,24 +163,13 @@ void client::displayMessage(Message_msg *m) {
     EV << "The client with id: " << this->getId() << " and with timestamp: "
               << ts_vec[m->getTopic()]
               << " will display a message about topic: " << m->getTopic()
-              << " with timestamp: " << m->getTimestamp() << "\n";
+              << " with timestamp: " << m->getTimestamp() << endl;
     displayed++;
 }
 
 void client::finish()
 {
-    //TODO
-    // This function is called by OMNeT++ at the end of the simulation.
-    EV << "Sent:     " << numSent << endl;
-    EV << "Received: " << numReceived << endl;
-    EV << "Hop count, min:    " << hopCountStats.getMin() << endl;
-    EV << "Hop count, max:    " << hopCountStats.getMax() << endl;
-    EV << "Hop count, mean:   " << hopCountStats.getMean() << endl;
-    EV << "Hop count, stddev: " << hopCountStats.getStddev() << endl;
-
-    recordScalar("#sent", numSent);
-    recordScalar("#received", numReceived);
-
-    hopCountStats.recordAs("hop count");
+    EV <<  boost::str(boost::format("c\t%d\t%d\t%d\t%d\t%d\t%d\t%d")
+            % this->getId() % numSubs % numPubs % wrongDispatch % displayed % rescheduled % skipped) << endl;
 }
 
