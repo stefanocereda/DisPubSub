@@ -277,8 +277,22 @@ void broker::handleBrokerLeaveMessage(Leave_msg *m){
 void broker::handleBrokerJoinMessage(Join_msg *m){
     // It has to behave as the first time
 
-    EV << "The Broker with id: " << this->getId() << " readd: " << m->getArrivalGate()->getIndex();;
-    handleBrokerInitMessage(m);
+    EV << "The Broker with id: " << this->getId() << " readd: " << m->getArrivalGate()->getIndex();
+
+    //add the broker to our list
+    int channel = m->getArrivalGate()->getIndex();
+    broker_gate_table.push_back(channel);
+
+    //and send it our subscription list
+    for (SubscriptionTable::const_iterator subs_it = subs_table.begin(), end = subs_table.end();
+            subs_it != end; ++subs_it)
+    {
+        int topic = subs_it -> first;
+        Subscribe_msg *m = new Subscribe_msg("subscribe");
+        m->setSrcId(this->getId());
+        m->setTopic(topic);
+        send(m, "gate$o", channel);
+    }
 }
 
 void broker::bundleCycle(){

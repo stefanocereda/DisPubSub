@@ -196,8 +196,3 @@ void client::displayMessage(Message_msg *m) {
               << " with timestamp: " << m->getTimestamp() << "\n";
 }
 
-
-//TODO: How to set it off, only with the working_modality or I have to add some if statements to check it!? (in my opinion th esecond)
-// even if the broker should know it.. but what if the broker is a hub? I still receive messages and I will elaborate them....
-// What do I have to modify to do this prevention?
-
