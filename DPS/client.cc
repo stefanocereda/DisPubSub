@@ -120,14 +120,19 @@ void client::bundleCycle(){
 }
 
 void client::handleMessage(cMessage *msg) {
-    if (strcmp("message", msg->getFullName()) == 0) {
-        handleMessageMessage(dynamic_cast<Message_msg*>(msg));
-    }
+    if( working_modality == ON ){
+        if (strcmp("message", msg->getFullName()) == 0) {
+            handleMessageMessage(dynamic_cast<Message_msg*>(msg));
+        }
 
-    if (strcmp("broker", msg->getFullName()) == 0) {
-        handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
+        if (strcmp("broker", msg->getFullName()) == 0) {
+            handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
+        }
     }
-
+    else{
+        // It may happen after a join of a broker
+        EV << "The client with id: " << this->getId() << " is OFF doesn't care of messages";
+    }
 }
 
 void client::handleMessageBroker(Broker_init_msg *msg) {

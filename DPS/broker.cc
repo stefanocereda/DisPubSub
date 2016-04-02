@@ -275,7 +275,10 @@ void broker::handleBrokerLeaveMessage(Leave_msg *m){
 }
 
 void broker::handleBrokerJoinMessage(Join_msg *m){
-    //TODO
+    // It has to behave as the first time
+
+    EV << "The Broker with id: " << this->getId() << " readd: " << m->getArrivalGate()->getIndex();;
+    handleBrokerInitMessage(m);
 }
 
 void broker::bundleCycle(){
@@ -355,5 +358,3 @@ void broker::broadcast(cMessage *m , int except_channel , int mode){
     }
 
 }
-
-// TODO: how to manage critical rides! same problem of clients?
