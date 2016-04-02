@@ -279,10 +279,13 @@ void broker::handleBrokerJoinMessage(Join_msg *m){
 }
 
 void broker::bundleCycle(){
+    // Bundle Cycle to call the join
+    EV << "Broker with id " << this->getId() << " has entered in the budleCycle";
 
     while(-1){
         if( rand() % 100 <= JOIN_PROBABILITY * 100){
             sendBrokerJoinMessage();
+            EV << "Broker with id " << this->getId() << " has rejoin the network!";
             return;
         }
     }
@@ -297,34 +300,35 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
 
     // Get the iterator referred on the topic of the message
     SubscriptionTable::iterator topic_it = subs_table.find(topic);
-        // If is not empty
-        if (topic_it != subs_table.end()){
-            // I get the lists of subscribers to such a topic
-            std::list<int> chans_list = topic_it -> second;
 
-            // I basically iterate on such a lists of subscribers in order to find the one that unsubscribe and update the status
-            for (std::list<int>::const_iterator chans_it = chans_list.begin(), end = chans_list.end();
-                   chans_it != end; ++chans_it) {
+    // If is not empty
+    if (topic_it != subs_table.end()){
+        // I get the lists of subscribers to such a topic
+        std::list<int> chans_list = topic_it -> second;
 
-                // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
-                if(*chans_it == in_chan){
-                    chans_it = chans_list.erase(chans_it);
-                    subs_counter[topic_it->first]--;
+        // I basically iterate on such a lists of subscribers in order to find the one that unsubscribe and update the status
+        for (std::list<int>::const_iterator chans_it = chans_list.begin(), end = chans_list.end();
+               chans_it != end; ++chans_it) {
 
-                    // If I have no more follower I continue the already started unsubscribe chain
-                    if(subs_counter[topic_it->first] == 0){
-                        // Create a unsubscribe message referred to the unsubscribe topic
-                        Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
-                        unsubscribe->setTopic(topic);
+            // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
+            if(*chans_it == in_chan){
+                chans_it = chans_list.erase(chans_it);
+                subs_counter[topic_it->first]--;
 
-                        EV << "Broker with id " << this->getId() << " continue the unsubscribe chain for " << topic_it->first;
+                // If I have no more follower I continue the already started unsubscribe chain
+                if(subs_counter[topic_it->first] == 0){
+                    // Create a unsubscribe message referred to the unsubscribe topic
+                    Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
+                    unsubscribe->setTopic(topic);
 
-                        // Send it in broadcast to only the connected brokers
-                        broadcast(unsubscribe,in_chan,ONLY_BROKERS);
-                    }
+                    EV << "Broker with id " << this->getId() << " continue the unsubscribe chain for " << topic_it->first;
+
+                    // Send it in broadcast to only the connected brokers
+                    broadcast(unsubscribe,in_chan,ONLY_BROKERS);
                 }
             }
         }
+    }
 }
 
 void broker::broadcast(cMessage *m , int except_channel , int mode){
