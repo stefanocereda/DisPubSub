@@ -14,6 +14,12 @@
 #include <omnetpp.h>
 #include <string.h>
 #include "parameters.h"
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <future>
+#include <functional>
+
 using namespace omnetpp;
 
 // Broker working modalities
@@ -25,10 +31,11 @@ using namespace omnetpp;
 #define ALL_GATES 1
 
 // Leave and Join probabilities and delays
-#define LEAVE_PROBABILITY 0.1
+#define LEAVE_PROBABILITY 0.07
 #define LEAVE_DELAY 10
-#define JOIN_PROBABILITY 0.1
-#define JOIND_DELAY 10
+//Da togliere....supponiamo si riconnettano prima o poi sempre
+//#define JOIN_PROBABILITY 0.1
+#define JOIND_DELAY 2
 
 class broker: public cSimpleModule {
 private:
@@ -54,9 +61,13 @@ private:
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleBrokerJoinMessage(Join_msg *m);
     void handleUnsubscribeMessage(Unsubscribe_msg *m);
+    void handleAckLeaveMessage(cMessage *m);
+    void handleAckJoinMessage(cMessage *m);
     void sendBrokerLeaveMessage();
-    void sendBrokerJoinMessage();
+    void sendJoinMessage();
+    void sendJoinMessage(int delay);
     void broadcast(cMessage *m , int except_channel , int mode);
+    void broadcast(cMessage *m , int except_channel , int mode, int delay);
     void bundleCycle();
 
 protected:
@@ -75,6 +86,7 @@ Define_Module(broker);
 
 //Tell everybody that we are up and running :)
 void broker::initialize() {
+
     int n = gateSize("gate");
 
     for (int i = 0; i < n; i++) {// Broadcast
@@ -83,12 +95,13 @@ void broker::initialize() {
         send(msg, "gate$o", i);
     }
 
+    broker_hub_mode = NORMAL_EXE;
 
     if( rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendBrokerLeaveMessage();
     }
 
-    broker_hub_mode = NORMAL_EXE;
+
 }
 
 void broker::handleMessage(cMessage *msg) {
@@ -110,11 +123,17 @@ void broker::handleMessage(cMessage *msg) {
             handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if(strcmp("unsubscribe", msg->getFullName()) == 0){
             handleUnsubscribeMessage(dynamic_cast<Unsubscribe_msg*>(msg));
+        } else if(strcmp("ack_leave", msg->getFullName()) == 0){
+            handleAckLeaveMessage(msg);
         }
     }
     else{ // In this case I work as hub
         // I have to send the message to all the connected brokers and clients except for the receiver
-        broadcast(msg , msg->getArrivalGate()->getIndex() , ALL_GATES);
+        if(strcmp("ack_join", msg->getFullName()) == 0){
+            handleAckJoinMessage(msg);
+        }else
+
+            broadcast(msg , msg->getArrivalGate()->getIndex() , ALL_GATES);
     }
 }
 
@@ -143,7 +162,7 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
     bool newTopic = false;
     SubscriptionTable::iterator it = subs_table.find(topic);
 
-    EV << "The broker with id: " << this->getId() << " received a subscribe for the topic: " << topic
+    EV << "\nThe broker with id: " << this->getId() << " received a subscribe for the topic: " << topic
             << " from client with id: " << m->getSrcId() << "\n";
 
     subs_counter[topic]++;
@@ -229,7 +248,7 @@ void broker::updateStatusLeave(Leave_msg *m){
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
-                    EV << "Broker with id " << this->getId() << " unsubscribe to the topic " << topics_it->first;
+                    EV << "\nBroker with id " << this->getId() << " unsubscribe to the topic " << topics_it->first;
                     broadcast(unsubscribe , *chans_it , ONLY_BROKERS);
                 }
             }
@@ -237,6 +256,31 @@ void broker::updateStatusLeave(Leave_msg *m){
     }
 }
 
+void broker::handleAckLeaveMessage(cMessage *m){
+
+    if(broker_hub_mode == HUB_MODE){
+        return;
+    }
+    //The broker becomes an hub
+    broker_hub_mode = HUB_MODE;
+
+    EV << "\nBroker with id " << this->getId() << " is now a hub";
+
+    int awakeningDelay = intuniform(JOIND_DELAY, MAX_DELAY);
+
+    sendJoinMessage(awakeningDelay);
+
+}
+
+void broker::handleAckJoinMessage(cMessage *m){
+
+    if(broker_hub_mode != NORMAL_EXE){
+        //The broker goes in normal execution
+        broker_hub_mode = NORMAL_EXE;
+
+    }
+
+}
 
 void broker::handleClientJoinMessage(Join_msg *m){
     // TODO
@@ -248,40 +292,57 @@ void broker::sendBrokerLeaveMessage(){
     // I send in broadcast to all the connected brokers and clients that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
 
-    EV << "The Broker with id: " << this->getId() << " has LEFT the network!";
+    EV << "\nThe Broker with id: " << this->getId() << " wants to leave the network!";
 
     // The inverse may cause problem by still being in normal_exe even after the leave
-    broker_hub_mode = HUB_MODE;
-    broadcast(leave, -1 ,ONLY_BROKERS);
+ //   broker_hub_mode = HUB_MODE;
+    //We postpone the moment in which the broker will leave the network: The decision is made for the simulation in the init phase
+    //But is performed after a while
+    int delay = intuniform(2, MAX_DELAY);
+    broadcast(leave, -1 , ALL_GATES, delay);
 
-    bundleCycle();
+   // bundleCycle();
+
 
 }
 
-void broker::sendBrokerJoinMessage(){
+void broker::sendJoinMessage(){
+    sendJoinMessage(0);
+}
+
+void broker::sendJoinMessage(int delay){
+
     // I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
     Join_msg *join = new Join_msg("broker_join");
 
-    EV << "The Broker with id: " << this->getId() << " has join again the network! \n";
+    EV << "\nThe Broker with id: " << this->getId() << " wants to join again the network! \n";
 
-    broker_hub_mode = NORMAL_EXE;
-    broadcast(join, -1 ,ONLY_BROKERS);
+    broadcast(join, -1 , ALL_GATES, delay);
 }
 
 void broker::handleBrokerLeaveMessage(Leave_msg *m){
     // It only update the status after the receiving of a leave by a broker
 
-    updateStatusLeave(m);
+    //updateStatusLeave(m);
+
+    //I ack a broker leave
+    Message_msg *msg = new Message_msg("ack_leave");
+    int channel = m->getArrivalGate()->getIndex();
+    send(msg, "gate$o", channel);
 
 }
 
 void broker::handleBrokerJoinMessage(Join_msg *m){
     // It has to behave as the first time
 
-    EV << "The Broker with id: " << this->getId() << " readd: " << m->getArrivalGate()->getIndex();
+    //   EV << "\nThe Broker with id: " << this->getId() << " read: " << m->getArrivalGate()->getIndex();
+
+    Message_msg *msg = new Message_msg("ack_join");
+    int channel = m->getArrivalGate()->getIndex();
+    send(msg, "gate$o", channel);
 
     //add the broker to our list
-    int channel = m->getArrivalGate()->getIndex();
+
     broker_gate_table.push_back(channel);
 
     //and send it our subscription list
@@ -326,7 +387,7 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg("unsubscribe");
                     unsubscribe->setTopic(topic);
 
-                    EV << "Broker with id " << this->getId() << " continue the unsubscribe chain for " << topic_it->first;
+                    EV << "\nBroker with id " << this->getId() << " continue the unsubscribe chain for " << topic_it->first;
 
                     // Send it in broadcast to only the connected brokers
                     broadcast(unsubscribe,in_chan,ONLY_BROKERS);
@@ -339,19 +400,19 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
 
 void broker::bundleCycle(){
     // Bundle Cycle to call the join
-    EV << "Broker with id " << this->getId() << " has entered in the budleCycle";
 
-    while(-1){
-        if( rand() % 100 <= JOIN_PROBABILITY * 100){
-            sendBrokerJoinMessage();
-            EV << "Broker with id " << this->getId() << " has rejoin the network!";
-            return;
-        }
-    }
+
+      //EV << "\nBroker with id " << this->getId() << " has rejoin the network!";
+      return;
 }
 
 
 void broker::broadcast(cMessage *m , int except_channel , int mode){
+
+    broadcast(m,except_channel,mode,0);
+}
+
+void broker::broadcast(cMessage *m , int except_channel , int mode, int delay){
     // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
 
     if( mode == ONLY_BROKERS ){
@@ -359,7 +420,7 @@ void broker::broadcast(cMessage *m , int except_channel , int mode){
            chans_it != end; ++chans_it) {
             if(*chans_it != except_channel){
                 Message_msg *copy = (Message_msg *)m->dup();
-                send(copy, "gate$o", *chans_it);
+                sendDelayed(copy, delay ,"gate$o", *chans_it);
             }
         }
     }else{ // RealBroadcast that is to all the gates/channels
@@ -369,7 +430,7 @@ void broker::broadcast(cMessage *m , int except_channel , int mode){
         for (int i = 0; i < n; i++) {
             if( i != except_channel ){
                 Message_msg *copy = (Message_msg *)m->dup();
-                send(copy, "gate$o", i);
+                sendDelayed(copy, delay , "gate$o", i);
             }
         }
     }

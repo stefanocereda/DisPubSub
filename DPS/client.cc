@@ -37,9 +37,12 @@ private:
     void handleMessageMessage(Message_msg *m);
     void displayMessage(Message_msg *m);
     void handleMessageBroker(Broker_init_msg *msg);
+    void handleBrokerLeaveMessage(Leave_msg *m);
+    void handleBrokerJoinMessage(Join_msg *m);
 
     void sendJoin();
     void sendLeave();
+    void sendSubs();
 
     void bundleCycle();
 
@@ -129,6 +132,15 @@ void client::handleMessage(cMessage *msg) {
         if (strcmp("broker", msg->getFullName()) == 0) {
             handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
         }
+
+        if (strcmp("broker_join", msg->getFullName()) == 0) {
+            handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
+        }
+
+        if (strcmp("broker_leave", msg->getFullName()) == 0) {
+            handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
+        }
+
     }
     else{
         // It may happen when comunicating with a hub
@@ -187,6 +199,38 @@ void client::handleMessageMessage(Message_msg *m) {
                   << topic << " with timestamp: " << ts << " at time: "
                   << simTime() + RESEND_TIMEOUT << "\n";
     }
+}
+
+void client::handleBrokerLeaveMessage(Leave_msg *m){
+    // It only update the status after the receiving of a leave by a broker
+
+    //updateStatusLeave(m);
+
+    //I ack a broker leave
+    Message_msg *msg = new Message_msg("ack_leave");
+    int channel = m->getArrivalGate()->getIndex();
+    send(msg, "gate$o", channel);
+
+}
+
+void client::sendSubs() {
+
+    for (int i = 0; i < my_subs.size(); i++){
+        if(my_subs[i] == true){
+            Subscribe_msg *msg = new Subscribe_msg("subscribe");
+                msg->setSrcId(this->getId());
+                msg->setTopic(i);
+        }
+    }
+}
+
+void client::handleBrokerJoinMessage(Join_msg *m){
+
+    Message_msg *msg = new Message_msg("ack_join");
+    int channel = m->getArrivalGate()->getIndex();
+    send(msg, "gate$o", channel);
+
+    sendSubs();
 }
 
 //TODO
