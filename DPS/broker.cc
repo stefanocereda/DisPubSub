@@ -242,15 +242,7 @@ void broker::handleClientJoinMessage(Join_msg *m){
     // TODO
 }
 
-void broker::sendBrokerJoinMessage(){
-    // I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
-    Join_msg *join = new Join_msg("broker_join");
-
-    EV << "The Broker with id: " << this->getId() << " has join again the network! \n";
-
-    broker_hub_mode = NORMAL_EXE;
-    broadcast(join, -1 ,ONLY_BROKERS);
-}
+// BROKER: send-Leave&Join , handle-Leave&Join&Unsubscribe
 
 void broker::sendBrokerLeaveMessage(){
     // I send in broadcast to all the connected brokers and clients that I'm leaving and then I pass to the hub_mode
@@ -266,6 +258,15 @@ void broker::sendBrokerLeaveMessage(){
 
 }
 
+void broker::sendBrokerJoinMessage(){
+    // I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
+    Join_msg *join = new Join_msg("broker_join");
+
+    EV << "The Broker with id: " << this->getId() << " has join again the network! \n";
+
+    broker_hub_mode = NORMAL_EXE;
+    broadcast(join, -1 ,ONLY_BROKERS);
+}
 
 void broker::handleBrokerLeaveMessage(Leave_msg *m){
     // It only update the status after the receiving of a leave by a broker
@@ -292,19 +293,6 @@ void broker::handleBrokerJoinMessage(Join_msg *m){
         m->setSrcId(this->getId());
         m->setTopic(topic);
         send(m, "gate$o", channel);
-    }
-}
-
-void broker::bundleCycle(){
-    // Bundle Cycle to call the join
-    EV << "Broker with id " << this->getId() << " has entered in the budleCycle";
-
-    while(-1){
-        if( rand() % 100 <= JOIN_PROBABILITY * 100){
-            sendBrokerJoinMessage();
-            EV << "Broker with id " << this->getId() << " has rejoin the network!";
-            return;
-        }
     }
 }
 
@@ -347,6 +335,21 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m){
         }
     }
 }
+
+
+void broker::bundleCycle(){
+    // Bundle Cycle to call the join
+    EV << "Broker with id " << this->getId() << " has entered in the budleCycle";
+
+    while(-1){
+        if( rand() % 100 <= JOIN_PROBABILITY * 100){
+            sendBrokerJoinMessage();
+            EV << "Broker with id " << this->getId() << " has rejoin the network!";
+            return;
+        }
+    }
+}
+
 
 void broker::broadcast(cMessage *m , int except_channel , int mode){
     // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it

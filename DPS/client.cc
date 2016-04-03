@@ -114,6 +114,7 @@ void client::bundleCycle(){
     while(-1){
         if( rand() % 100 <= JOIN_PROBABILITY * 100){
             sendJoin();
+
             return;
         }
     }
@@ -130,7 +131,7 @@ void client::handleMessage(cMessage *msg) {
         }
     }
     else{
-        // It may happen after a join of a broker
+        // It may happen when comunicating with a hub
         EV << "The client with id: " << this->getId() << " is OFF doesn't care of messages";
     }
 }
