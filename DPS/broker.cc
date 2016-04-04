@@ -60,6 +60,7 @@ private:
     void handleBrokerInitMessage(Broker_init_msg *m);
     void handleMessageMessage(Message_msg *m);
     void updateStatusLeave(Leave_msg *m);
+    void handleClientLeaveMessage(Leave_msg *m);
     void handleClientJoinMessage(Join_msg *m);
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleBrokerJoinMessage(Join_msg *m);
@@ -117,7 +118,7 @@ void broker::handleMessage(cMessage *msg) {
         } else if (strcmp("message", msg->getFullName()) == 0) {
             handleMessageMessage(dynamic_cast<Message_msg*>(msg));
         } else if(strcmp("client_leave", msg->getFullName()) == 0){
-            updateStatusLeave(dynamic_cast<Leave_msg*>(msg));
+            handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
         } else if(strcmp("client_join", msg->getFullName()) == 0){
             handleClientJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if(strcmp("broker_leave", msg->getFullName()) == 0){
@@ -221,6 +222,21 @@ void broker::handleMessageMessage(Message_msg *m) {
                     send(copy, "gate$o", *chans_it);
                 }
         }
+    }
+
+}
+
+void broker::handleClientLeaveMessage(Leave_msg *m){
+    // Check consistency
+    // Gate from which I receive the leave message
+    int gate_index = m->getArrivalGate()->getIndex();
+
+    if (std::find(std::begin(broker_gate_table), std::end(broker_gate_table), gate_index) == std::end(broker_gate_table)){
+        // Is received from a real client
+        updateStatusLeave(m);
+    }else{
+        // Is received from a broker-hub
+        return;
     }
 
 }
