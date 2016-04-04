@@ -61,7 +61,7 @@ public:
 Define_Module(client);
 
 void client::initialize() {
-    EV << this->getFullName() << " con id: " << this->getId() << "\n";
+    EV << "\n" << this->getFullName() << " con id: " << this->getId();
     working_modality = ON;
 }
 
@@ -76,8 +76,8 @@ void client::sendSub(int topic, int delay) {
     msg->setTopic(topic);
 
     sendDelayed(msg, delay, "gate$o", 0);
-    EV << "The client with id: " << this->getId()
-              << " sent a subscribe for the topic: " << topic << "\n";
+    EV  << "\n"  << "The client with id: " << this->getId()
+              << " sent a subscribe for the topic: " << topic;
 }
 
 //Send a message for the given topic
@@ -87,8 +87,8 @@ void client::sendMsg(int topic, int delay) {
     msg->setTimestamp(++ts_vec[topic]);
 
     sendDelayed(msg, delay, "gate$o", 0); //TODO spararli fuori a caso
-    EV << "The client with id: " << this->getId()
-              << " sent a publish for the topic: " << topic << "\n";
+    EV  << "\n"  <<  "The client with id: " << this->getId()
+              << " sent a publish for the topic: " << topic;
 }
 
 void client::sendJoin(){
@@ -96,7 +96,7 @@ void client::sendJoin(){
     join->setSrcId(this->getId());
 
     sendDelayed(join, JOIN_DELAY , "gate$o" , 0);
-    EV << "The client with id: " << this->getId() << " has JOIN the connected broker again! \n";
+    EV << "\n"  << "The client with id: " << this->getId() << " has JOIN the connected broker again!";
 
     working_modality = ON;
 }
@@ -106,7 +106,7 @@ void client::sendLeave() {
     leave->setSrcId(this->getId());
 
     sendDelayed(leave, LEAVE_DELAY , "gate$o", 0);
-    EV << "The client with id: " << this->getId() << " has LEFT this network! \n";
+    EV  << "\n"  << "The client with id: " << this->getId() << " has LEFT this network!";
 
     working_modality = OFF;
 
@@ -144,7 +144,7 @@ void client::handleMessage(cMessage *msg) {
     }
     else{
         // It may happen when comunicating with a hub
-        EV << "The client with id: " << this->getId() << " is OFF doesn't care of messages";
+        EV  << "\n" << "The client with id: " << this->getId() << " is OFF doesn't care of messages";
     }
 }
 
@@ -182,22 +182,22 @@ void client::handleMessageMessage(Message_msg *m) {
         if (my_ts < ts) {
             //Merge vector
             ts_vec[topic] = ts;
-            EV << "The client with id: " << this->getId()
+            EV  << "\n" << "The client with id: " << this->getId()
                       << " now has updated his timestamp to: " << ts_vec[topic];
         }
     } else if (m->isSelfMessage()) {
         //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
-        EV << "The client with id: " << this->getId() << " lost a message";
+        EV  << "\n" << "The client with id: " << this->getId() << " lost a message";
         displayMessage(m);
         ts_vec[topic] = ts;
     } else //try to wait
     {
         scheduleAt(simTime() + RESEND_TIMEOUT, m->dup());
-        EV << "The client with id: " << this->getId() << " and with timestamp: "
+        EV  << "\n"  << "The client with id: " << this->getId() << " and with timestamp: "
                   << my_ts
                   << " will delay the shipment of a message about topic: "
                   << topic << " with timestamp: " << ts << " at time: "
-                  << simTime() + RESEND_TIMEOUT << "\n";
+                  << simTime() + RESEND_TIMEOUT;
     }
 }
 
@@ -235,9 +235,9 @@ void client::handleBrokerJoinMessage(Join_msg *m){
 
 //TODO
 void client::displayMessage(Message_msg *m) {
-    EV << "The client with id: " << this->getId() << " and with timestamp: "
+    EV  << "\n" << "The client with id: " << this->getId() << " and with timestamp: "
               << ts_vec[m->getTopic()]
               << " will display a message about topic: " << m->getTopic()
-              << " with timestamp: " << m->getTimestamp() << "\n";
+              << " with timestamp: " << m->getTimestamp();
 }
 
