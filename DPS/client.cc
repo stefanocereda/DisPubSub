@@ -13,17 +13,22 @@
 #include "message_m.h"
 #include "broker_init_m.h"
 #include "leave_m.h"
+#include "join_m.h"
 
-// How frequently a leave occurs
 #define LEAVE_PROBABILITY 0.1
-
-// How long to send a leave after it starts
 #define LEAVE_DELAY 10
+#define JOIN_PROBABILITY 0.1
+#define JOIN_DELAY 10
+
+#define ON 1
+#define OFF 0
 
 using namespace omnetpp;
 
 class client: public cSimpleModule {
 private:
+    int working_modality;
+
     std::vector<int> ts_vec;
     std::vector<bool> my_subs;
 
@@ -40,8 +45,14 @@ private:
     void handleMessageMessage(Message_msg *m);
     void displayMessage(Message_msg *m);
     void handleMessageBroker(Broker_init_msg *msg);
+    void handleBrokerLeaveMessage(Leave_msg *m);
+    void handleBrokerJoinMessage(Join_msg *m);
 
+    void sendJoin();
     void sendLeave();
+    void sendSubs();
+
+    void bundleCycle();
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -60,6 +71,7 @@ Define_Module(client);
 
 void client::initialize() {
     EV << this->getFullName() << " has id: " << this->getId() << endl;
+    working_modality = ON;
 }
 
 //Subscribe to the given topic
@@ -90,23 +102,61 @@ void client::sendMsg(int topic, int delay) {
     numPubs++;
 }
 
+void client::sendJoin(){
+    Join_msg *join = new Join_msg("client_join");
+    join->setSrcId(this->getId());
+
+    sendDelayed(join, JOIN_DELAY , "gate$o" , 0);
+    EV << "\n"  << "The client with id: " << this->getId() << " has JOIN the connected broker again!";
+
+    working_modality = ON;
+}
+
 void client::sendLeave() {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
 
     sendDelayed(leave, LEAVE_DELAY , "gate$o", 0);
-    EV << "The client with id: " << this->getId() << " has LEFT this network! \n";
+    EV  << "\n"  << "The client with id: " << this->getId() << " has LEFT this network!";
+
+    working_modality = OFF;
+
+    bundleCycle();
+}
+
+void client::bundleCycle(){
+    while(-1){
+        if( rand() % 100 <= JOIN_PROBABILITY * 100){
+            sendJoin();
+
+            return;
+        }
+    }
 }
 
 void client::handleMessage(cMessage *msg) {
-    if (strcmp("message", msg->getFullName()) == 0) {
-        handleMessageMessage(dynamic_cast<Message_msg*>(msg));
-    }
+    if( working_modality == ON ){
+        if (strcmp("message", msg->getFullName()) == 0) {
+            handleMessageMessage(dynamic_cast<Message_msg*>(msg));
+        }
 
-    if (strcmp("broker", msg->getFullName()) == 0) {
-        handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
-    }
+        if (strcmp("broker", msg->getFullName()) == 0) {
+            handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
+        }
 
+        if (strcmp("broker_join", msg->getFullName()) == 0) {
+            handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
+        }
+
+        if (strcmp("broker_leave", msg->getFullName()) == 0) {
+            handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
+        }
+
+    }
+    else{
+        // It may happen when comunicating with a hub
+        EV  << "\n" << "The client with id: " << this->getId() << " is OFF doesn't care of messages";
+    }
 }
 
 void client::handleMessageBroker(Broker_init_msg *msg) {
@@ -114,10 +164,10 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
     for (int i = 0; i < N_SEND; i++)
         if (rand() % 100 <= SUBS_RATIO * 100)
             //send a sub
-            sendSub(intuniform(0, NTOPIC - 1), intuniform(2, MAX_DELAY));
+            sendSub(intuniform(0, NTOPIC - 1), intuniform(0, 1));
         else
             //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), intuniform(1, MAX_DELAY));
+            sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, 30));
 
     if( rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendLeave();
@@ -144,7 +194,7 @@ void client::handleMessageMessage(Message_msg *m) {
         if (my_ts < ts) {
             //Merge vector
             ts_vec[topic] = ts;
-            EV << "The client with id: " << this->getId()
+            EV  << "\n" << "The client with id: " << this->getId()
                       << " now has updated his timestamp to: " << ts_vec[topic];
         }
     } else if (m->isSelfMessage()) {
@@ -157,7 +207,7 @@ void client::handleMessageMessage(Message_msg *m) {
     } else //try to wait
     {
         scheduleAt(simTime() + RESEND_TIMEOUT, m->dup());
-        EV << "The client with id: " << this->getId() << " and with timestamp: "
+        EV  << "\n"  << "The client with id: " << this->getId() << " and with timestamp: "
                   << my_ts
                   << " will delay the shipment of a message about topic: "
                   << topic << " with timestamp: " << ts << " at time: "
@@ -166,8 +216,40 @@ void client::handleMessageMessage(Message_msg *m) {
     }
 }
 
+void client::handleBrokerLeaveMessage(Leave_msg *m){
+    // It only update the status after the receiving of a leave by a broker
+
+    //updateStatusLeave(m);
+
+    //I ack a broker leave
+    Message_msg *msg = new Message_msg("ack_leave");
+    int channel = m->getArrivalGate()->getIndex();
+    send(msg, "gate$o", channel);
+
+}
+
+void client::sendSubs() {
+
+    for (int i = 0; i < my_subs.size(); i++){
+        if(my_subs[i] == true){
+            Subscribe_msg *msg = new Subscribe_msg("subscribe");
+                msg->setSrcId(this->getId());
+                msg->setTopic(i);
+        }
+    }
+}
+
+void client::handleBrokerJoinMessage(Join_msg *m){
+
+    Message_msg *msg = new Message_msg("ack_join");
+    int channel = m->getArrivalGate()->getIndex();
+    send(msg, "gate$o", channel);
+
+    sendSubs();
+}
+
 void client::displayMessage(Message_msg *m) {
-    EV << "The client with id: " << this->getId() << " and with timestamp: "
+    EV  << "\n" << "The client with id: " << this->getId() << " and with timestamp: "
               << ts_vec[m->getTopic()]
               << " will display a message about topic: " << m->getTopic()
               << " with timestamp: " << m->getTimestamp() << endl;
