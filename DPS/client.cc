@@ -14,7 +14,7 @@
 #include "leave_m.h"
 #include "join_m.h"
 
-#define LEAVE_PROBABILITY 0.1
+#define LEAVE_PROBABILITY 0.6
 #define LEAVE_DELAY 10
 #define JOIN_PROBABILITY 0.1
 #define JOIN_DELAY 10
@@ -154,10 +154,11 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
         if (rand() % 100 <= SUBS_RATIO * 100)
             //send a sub
             sendSub(intuniform(0, NTOPIC - 1), intuniform(0, 1));
-        else
-            //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, 30));
-
+        else//send a publish
+            if( i < N_SEND/2 ) // First phase of publishes
+                sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, 15));
+            else    // Second phase of publishes
+                sendMsg(intuniform(0, NTOPIC - 1), intuniform(15, 40));
     if( rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendLeave();
     }

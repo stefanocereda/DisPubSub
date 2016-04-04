@@ -32,7 +32,7 @@ using namespace omnetpp;
 #define ALL_GATES 1
 
 // Leave and Join probabilities and delays
-#define LEAVE_PROBABILITY 0.07
+#define LEAVE_PROBABILITY 0.1
 #define LEAVE_DELAY 9
 //Da togliere....supponiamo si riconnettano prima o poi sempre
 //#define JOIN_PROBABILITY 0.1
@@ -100,8 +100,7 @@ void broker::initialize() {
 
     broker_hub_mode = NORMAL_EXE;
 
-    if(// rand() % 100 <= LEAVE_PROBABILITY * 100 ||
-            (strcmp("broker3", this->getFullName()) == 0)){
+    if(rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendBrokerLeaveMessage();
     }
 
