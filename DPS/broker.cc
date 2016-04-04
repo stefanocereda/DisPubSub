@@ -100,7 +100,8 @@ void broker::initialize() {
 
     broker_hub_mode = NORMAL_EXE;
 
-    if( rand() % 100 <= LEAVE_PROBABILITY * 100){
+    if(// rand() % 100 <= LEAVE_PROBABILITY * 100 ||
+            (strcmp("broker3", this->getFullName()) == 0)){
         sendBrokerLeaveMessage();
     }
 

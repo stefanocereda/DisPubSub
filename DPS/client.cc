@@ -156,7 +156,7 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
             sendSub(intuniform(0, NTOPIC - 1), intuniform(0, 1));
         else
             //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, MAX_DELAY));
+            sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, 30));
 
     if( rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendLeave();
