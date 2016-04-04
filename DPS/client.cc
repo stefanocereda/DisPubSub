@@ -153,10 +153,10 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
     for (int i = 0; i < N_SEND; i++)
         if (rand() % 100 <= SUBS_RATIO * 100)
             //send a sub
-            sendSub(intuniform(0, NTOPIC - 1), intuniform(2, MAX_DELAY));
+            sendSub(intuniform(0, NTOPIC - 1), intuniform(0, 1));
         else
             //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), intuniform(1, MAX_DELAY));
+            sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, MAX_DELAY));
 
     if( rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendLeave();

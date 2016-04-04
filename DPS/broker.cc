@@ -9,6 +9,7 @@
 #include "unsubscribe_m.h"
 #include "subscribe_m.h"
 #include "leave_m.h"
+#include "ack_leave_m.h"
 #include "join_m.h"
 #include <algorithm>
 #include <omnetpp.h>
@@ -32,10 +33,12 @@ using namespace omnetpp;
 
 // Leave and Join probabilities and delays
 #define LEAVE_PROBABILITY 0.07
-#define LEAVE_DELAY 10
+#define LEAVE_DELAY 9
 //Da togliere....supponiamo si riconnettano prima o poi sempre
 //#define JOIN_PROBABILITY 0.1
-#define JOIND_DELAY 2
+#define JOIND_DELAY 15
+
+#define HUB_MODE_TIME  10
 
 class broker: public cSimpleModule {
 private:
@@ -61,7 +64,7 @@ private:
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleBrokerJoinMessage(Join_msg *m);
     void handleUnsubscribeMessage(Unsubscribe_msg *m);
-    void handleAckLeaveMessage(cMessage *m);
+    void handleAckLeaveMessage(Ack_leave_msg *m);
     void handleAckJoinMessage(cMessage *m);
     void sendBrokerLeaveMessage();
     void sendJoinMessage();
@@ -124,16 +127,18 @@ void broker::handleMessage(cMessage *msg) {
         } else if(strcmp("unsubscribe", msg->getFullName()) == 0){
             handleUnsubscribeMessage(dynamic_cast<Unsubscribe_msg*>(msg));
         } else if(strcmp("ack_leave", msg->getFullName()) == 0){
-            handleAckLeaveMessage(msg);
+            handleAckLeaveMessage(dynamic_cast<Ack_leave_msg*>(msg));
         }
     }
     else{ // In this case I work as hub
         // I have to send the message to all the connected brokers and clients except for the receiver
         if(strcmp("ack_join", msg->getFullName()) == 0){
             handleAckJoinMessage(msg);
-        }else
-
+        }else if(strcmp("ack_leave", msg->getFullName()) == 0){
+            handleAckLeaveMessage(dynamic_cast<Ack_leave_msg*>(msg));
+        }else{
             broadcast(msg , msg->getArrivalGate()->getIndex() , ALL_GATES);
+        }
     }
 }
 
@@ -256,20 +261,23 @@ void broker::updateStatusLeave(Leave_msg *m){
     }
 }
 
-void broker::handleAckLeaveMessage(cMessage *m){
+void broker::handleAckLeaveMessage(Ack_leave_msg *m){
 
-    if(broker_hub_mode == HUB_MODE){
+    if(broker_hub_mode == HUB_MODE && this->getId() == m->getDestId()){
         return;
+    }else if(broker_hub_mode == NORMAL_EXE && this->getId() == m->getDestId()){
+
+        //The broker becomes an hub
+        broker_hub_mode = HUB_MODE;
+
+        EV << "\nBroker with id " << this->getId() << " is now a hub";
+
+        int awakeningDelay = intuniform(JOIND_DELAY, MAX_DELAY);
+
+        sendJoinMessage(awakeningDelay);
+    }else if(broker_hub_mode == HUB_MODE && this->getId() != m->getDestId()){
+        broadcast(m , -1 , ONLY_BROKERS);
     }
-    //The broker becomes an hub
-    broker_hub_mode = HUB_MODE;
-
-    EV << "\nBroker with id " << this->getId() << " is now a hub";
-
-    int awakeningDelay = intuniform(JOIND_DELAY, MAX_DELAY);
-
-    sendJoinMessage(awakeningDelay);
-
 }
 
 void broker::handleAckJoinMessage(cMessage *m){
@@ -291,6 +299,7 @@ void broker::handleClientJoinMessage(Join_msg *m){
 void broker::sendBrokerLeaveMessage(){
     // I send in broadcast to all the connected brokers and clients that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
+    leave->setSrcId(this->getId());
 
     EV << "\nThe Broker with id: " << this->getId() << " wants to leave the network!";
 
@@ -298,7 +307,7 @@ void broker::sendBrokerLeaveMessage(){
  //   broker_hub_mode = HUB_MODE;
     //We postpone the moment in which the broker will leave the network: The decision is made for the simulation in the init phase
     //But is performed after a while
-    int delay = intuniform(2, MAX_DELAY);
+    int delay = intuniform(LEAVE_DELAY, HUB_MODE_TIME);
     broadcast(leave, -1 , ALL_GATES, delay);
 
    // bundleCycle();
@@ -325,8 +334,12 @@ void broker::handleBrokerLeaveMessage(Leave_msg *m){
 
     //updateStatusLeave(m);
 
-    //I ack a broker leave
-    Message_msg *msg = new Message_msg("ack_leave");
+    // The id of the broker that wanna leave
+    int src_id = m->getSrcId();
+
+    //I ack the src_id broker leave
+    Ack_leave_msg *msg = new Ack_leave_msg("ack_leave");
+    msg->setDestId(src_id);
     int channel = m->getArrivalGate()->getIndex();
     send(msg, "gate$o", channel);
 
