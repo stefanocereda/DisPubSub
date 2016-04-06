@@ -30,21 +30,25 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
-    $O/broker.o \
     $O/client.o \
-    $O/broker_init_m.o \
-    $O/leave_m.o \
+    $O/broker.o \
+    $O/unsubscribe_m.o \
     $O/message_m.o \
-    $O/subscribe_m.o \
-    $O/unsubscribe_m.o
+    $O/leave_m.o \
+    $O/broker_init_m.o \
+    $O/ack_leave_m.o \
+    $O/join_m.o \
+    $O/subscribe_m.o
 
 # Message files
 MSGFILES = \
-    broker_init.msg \
-    leave.msg \
+    unsubscribe.msg \
     message.msg \
-    subscribe.msg \
-    unsubscribe.msg
+    leave.msg \
+    broker_init.msg \
+    ack_leave.msg \
+    join.msg \
+    subscribe.msg
 
 # SM files
 SMFILES =
@@ -137,8 +141,12 @@ depend:
 	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES) $(SM_CC_FILES)  ./*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+$O/ack_leave_m.o: ack_leave_m.cc \
+	ack_leave_m.h
 $O/broker.o: broker.cc \
+	ack_leave_m.h \
 	broker_init_m.h \
+	join_m.h \
 	leave_m.h \
 	message_m.h \
 	parameters.h \
@@ -148,10 +156,13 @@ $O/broker_init_m.o: broker_init_m.cc \
 	broker_init_m.h
 $O/client.o: client.cc \
 	broker_init_m.h \
+	join_m.h \
 	leave_m.h \
 	message_m.h \
 	parameters.h \
 	subscribe_m.h
+$O/join_m.o: join_m.cc \
+	join_m.h
 $O/leave_m.o: leave_m.cc \
 	leave_m.h
 $O/message_m.o: message_m.cc \

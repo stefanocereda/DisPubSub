@@ -20,6 +20,7 @@
 #include <thread>
 #include <future>
 #include <functional>
+#include <boost/format.hpp>
 
 using namespace omnetpp;
 
@@ -32,6 +33,7 @@ using namespace omnetpp;
 #define ALL_GATES 1
 
 // Leave and Join probabilities and delays
+//TODO: spostare nel file parameters.h
 #define LEAVE_PROBABILITY 0.07
 #define LEAVE_DELAY 9
 //Da togliere....supponiamo si riconnettano prima o poi sempre
@@ -42,7 +44,6 @@ using namespace omnetpp;
 
 class broker: public cSimpleModule {
 private:
-
     //States if the broker is up (0) or not (1)
     int broker_hub_mode;
 
@@ -55,6 +56,11 @@ private:
 
     //and where are the other brokers
     std::list<int> broker_gate_table;
+
+    int recSubs = 0,
+        sentSubs = 0,
+        recPubs = 0,
+        sentPubs = 0;
 
     void handleSubscribeMessage(Subscribe_msg *m);
     void handleBrokerInitMessage(Broker_init_msg *m);
@@ -77,6 +83,7 @@ protected:
     // The following redefined virtual function holds the algorithm.
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
 
 public:
     broker() :
@@ -101,7 +108,7 @@ void broker::initialize() {
     broker_hub_mode = NORMAL_EXE;
 
     if(// rand() % 100 <= LEAVE_PROBABILITY * 100 ||
-            (strcmp("broker3", this->getFullName()) == 0)){
+            (strcmp("broker3", this->getFullName()) == 0)){ //TODO ?
         sendBrokerLeaveMessage();
     }
 
@@ -161,6 +168,7 @@ void broker::handleBrokerInitMessage(Broker_init_msg *m) {
 }
 
 void broker::handleSubscribeMessage(Subscribe_msg *m) {
+    recSubs++;
     int topic = m->getTopic();
     int channel = m->getArrivalGate()->getIndex();
 
@@ -191,8 +199,6 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
     }
 
     //OK, now we should send the subscription to all the channels except the one where we have received it
-    //TODO broker centrale, gli arriva subscription arg1 da tutti e 3 i canali, come faccio a capire che non devo mandarla in giro?
-    //no ma forse è giusto che la mandi, ci devo pensare
     if (newTopic) {
         for (std::list<int>::const_iterator iterator =
                 broker_gate_table.begin(), end = broker_gate_table.end();
@@ -201,6 +207,7 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
                 // Duplicate message and send the copy.
                 Subscribe_msg *copy = (Subscribe_msg *) m->dup();
                 send(copy, "gate$o", *iterator);
+                sentSubs++;
             }
         }
     }
@@ -209,6 +216,7 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
 void broker::handleMessageMessage(Message_msg *m) {
     int topic = m->getTopic();
     int in_chan = m->getArrivalGate()->getIndex();
+    recPubs++;
 
 
     //search all the channels interested in the topic
@@ -220,6 +228,7 @@ void broker::handleMessageMessage(Message_msg *m) {
                 if(*chans_it != in_chan){
                     Message_msg *copy = (Message_msg *)m->dup();
                     send(copy, "gate$o", *chans_it);
+                    sentPubs++;
                 }
         }
     }
@@ -448,5 +457,10 @@ void broker::broadcast(cMessage *m , int except_channel , int mode, int delay){
             }
         }
     }
+}
 
+void broker::finish()
+{
+    EV <<  boost::str(boost::format("b,%d,%d,%d,%d,%d")
+            % this->getId() % recSubs % sentSubs % recPubs % sentPubs) << endl;
 }
