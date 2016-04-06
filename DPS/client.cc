@@ -258,7 +258,7 @@ void client::displayMessage(Message_msg *m) {
 
 void client::finish()
 {
-    EV <<  boost::str(boost::format("c\t%d\t%d\t%d\t%d\t%d\t%d\t%d")
+    EV <<  boost::str(boost::format("c,%d,%d,%d,%d,%d,%d,%d")
             % this->getId() % numSubs % numPubs % wrongDispatch % displayed % rescheduled % skipped) << endl;
 }
 
