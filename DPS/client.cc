@@ -147,6 +147,7 @@ void client::handleMessage(cMessage *msg) {
         // It may happen when comunicating with a hub
         EV  << "\n" << "The client with id: " << this->getId() << " is OFF doesn't care of messages";
     }
+    free(msg);
 }
 
 void client::handleMessageBroker(Broker_init_msg *msg) {

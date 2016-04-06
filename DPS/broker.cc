@@ -195,7 +195,7 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
     //OK, now we should send the subscription to all the channels except the one where we have received it
     for (std::list<int>::const_iterator iterator = broker_gate_table.begin(),
             end = broker_gate_table.end(); iterator != end; ++iterator) {
-        if (*iterator != channel) { //TODO check
+        if (*iterator != channel) {
             // Duplicate message and send the copy.
             Subscribe_msg *copy = (Subscribe_msg *) m->dup();
             send(copy, "gate$o", *iterator);
@@ -217,7 +217,7 @@ void broker::handleMessageMessage(Message_msg *m) {
         std::list<int> chans_list = topic_it->second;
         for (std::list<int>::const_iterator chans_it = chans_list.begin(), end =
                 chans_list.end(); chans_it != end; ++chans_it) {
-            if (*chans_it != in_chan) { //TODO check come sopra
+            if (*chans_it != in_chan) {
                 Message_msg *copy = (Message_msg *) m->dup();
                 send(copy, "gate$o", *chans_it);
                 sentPubs++;
@@ -294,6 +294,8 @@ void broker::updateStatusLeave(Leave_msg *m) {
             }
         }
     }
+
+    free(m);
 }
 
 void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
