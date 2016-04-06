@@ -15,10 +15,10 @@
 #include "leave_m.h"
 #include "join_m.h"
 
-#define LEAVE_PROBABILITY 0.1
-#define LEAVE_DELAY 10
+#define LEAVE_PROBABILITY 0.6
+#define LEAVE_DELAY 25
 #define JOIN_PROBABILITY 0.1
-#define JOIN_DELAY 10
+#define JOIN_DRIFT 5
 
 #define ON 1
 #define OFF 0
@@ -48,9 +48,10 @@ private:
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleBrokerJoinMessage(Join_msg *m);
 
-    void sendJoin();
     void sendLeave();
+    void sendJoin(int delay);
     void sendSubs();
+    void sendSubs(int delay);
 
     void bundleCycle();
 
@@ -102,37 +103,26 @@ void client::sendMsg(int topic, int delay) {
     numPubs++;
 }
 
-void client::sendJoin(){
-    Join_msg *join = new Join_msg("client_join");
-    join->setSrcId(this->getId());
-
-    sendDelayed(join, JOIN_DELAY , "gate$o" , 0);
-    EV << "\n"  << "The client with id: " << this->getId() << " has JOIN the connected broker again!";
-
-    working_modality = ON;
-}
 
 void client::sendLeave() {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
 
     sendDelayed(leave, LEAVE_DELAY , "gate$o", 0);
-    EV  << "\n"  << "The client with id: " << this->getId() << " has LEFT this network!";
+    EV  << "\n"  << "The client with id: " << this->getId() << " want to LEAVE this network!";
 
-    working_modality = OFF;
+    sendJoin(LEAVE_DELAY + JOIN_DRIFT);
 
-    bundleCycle();
 }
 
-void client::bundleCycle(){
-    while(-1){
-        if( rand() % 100 <= JOIN_PROBABILITY * 100){
-            sendJoin();
+void client::sendJoin(int delay){
+    // The join consists only in resend the subscription for the topic to which I'm interested in
+    sendSubs(delay);
 
-            return;
-        }
-    }
+    EV << "\n"  << "The client with id: " << this->getId() << " want to JOIN again the network!";
+
 }
+
 
 void client::handleMessage(cMessage *msg) {
     if( working_modality == ON ){
@@ -165,9 +155,11 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
         if (rand() % 100 <= SUBS_RATIO * 100)
             //send a sub
             sendSub(intuniform(0, NTOPIC - 1), intuniform(0, 1));
-        else
-            //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), intuniform(5, 30));
+        else//send a publish
+            if( i < N_SEND/2 ) // First phase of publishes
+                sendMsg(intuniform(0, NTOPIC - 1), intuniform(3, 7));
+            else    // Second phase of publishes
+                sendMsg(intuniform(0, NTOPIC - 1), intuniform(11, 35));
 
     if( rand() % 100 <= LEAVE_PROBABILITY * 100){
         sendLeave();
@@ -228,13 +220,19 @@ void client::handleBrokerLeaveMessage(Leave_msg *m){
 
 }
 
-void client::sendSubs() {
+void client::sendSubs(){
+    sendSubs(0);
+}
+
+
+void client::sendSubs(int delay) {
 
     for (int i = 0; i < my_subs.size(); i++){
         if(my_subs[i] == true){
             Subscribe_msg *msg = new Subscribe_msg("subscribe");
                 msg->setSrcId(this->getId());
                 msg->setTopic(i);
+            sendSub(i,delay);
         }
     }
 }
