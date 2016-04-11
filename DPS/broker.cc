@@ -32,17 +32,6 @@ using namespace omnetpp;
 #define ONLY_BROKERS 0
 #define ALL_GATES 1
 
-// Leave and Join probabilities and delays
-//TODO: spostare nel file parameters.h
-#define LEAVE_PROBABILITY 0.1
-
-#define LEAVE_DELAY 9
-//Da togliere....supponiamo si riconnettano prima o poi sempre
-//#define JOIN_PROBABILITY 0.1
-#define JOIND_DELAY 15
-
-#define HUB_MODE_TIME  10
-
 class broker: public cSimpleModule {
 private:
     //States if the broker is up (0) or not (1)
@@ -106,7 +95,7 @@ void broker::initialize() {
 
     broker_hub_mode = NORMAL_EXE;
 
-    if (rand() % 100 <= LEAVE_PROBABILITY * 100) {
+    if (rand() % 100 <= BROKER_LEAVE_PROBABILITY * 100) {
         sendBrokerLeaveMessage();
     }
 
@@ -310,7 +299,7 @@ void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
 
         EV << "\nBroker with id " << this->getId() << " is now a hub";
 
-        int awakeningDelay = intuniform(JOIND_DELAY, MAX_DELAY);
+        int awakeningDelay = intuniform(MIN_HUB_TIME, MAX_HUB_TIME);
 
         sendJoinMessage(awakeningDelay);
     } else if (broker_hub_mode == HUB_MODE && this->getId() != m->getDestId()) {
@@ -346,7 +335,7 @@ void broker::sendBrokerLeaveMessage() {
     //   broker_hub_mode = HUB_MODE;
     //We postpone the moment in which the broker will leave the network: The decision is made for the simulation in the init phase
     //But is performed after a while
-    int delay = intuniform(LEAVE_DELAY, HUB_MODE_TIME);
+    int delay = intuniform(MIN_BLEAVE_DELAY, MAX_BLEAVE_DELAY);
     broadcast(leave, -1, ALL_GATES, delay);
 
     // bundleCycle();

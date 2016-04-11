@@ -15,11 +15,6 @@
 #include "leave_m.h"
 #include "join_m.h"
 
-#define LEAVE_PROBABILITY 0.6
-#define LEAVE_DELAY 25
-#define JOIN_PROBABILITY 0.1
-#define JOIN_DRIFT 5
-
 #define ON 1
 #define OFF 0
 
@@ -108,10 +103,10 @@ void client::sendLeave() {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
 
-    sendDelayed(leave, LEAVE_DELAY , "gate$o", 0);
+    sendDelayed(leave, CLIENT_LEAVE_DELAY , "gate$o", 0); //TODO delay casuali
     EV  << "\n"  << "The client with id: " << this->getId() << " want to LEAVE this network!";
 
-    sendJoin(LEAVE_DELAY + JOIN_DRIFT);
+    sendJoin(CLIENT_LEAVE_DELAY + CLIENT_JOIN_DRIFT);
 
 }
 
@@ -155,14 +150,11 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
     for (int i = 0; i < N_SEND; i++)
         if (rand() % 100 <= SUBS_RATIO * 100)
             //send a sub
-            sendSub(intuniform(0, NTOPIC - 1), intuniform(0, 1));
+            sendSub(intuniform(0, NTOPIC - 1), intuniform(MIN_SUB_DELAY, MAX_SUB_DELAY));
         else//send a publish
-            if( i < N_SEND/2 ) // First phase of publishes
-                sendMsg(intuniform(0, NTOPIC - 1), intuniform(3, 7));
-            else    // Second phase of publishes
-                sendMsg(intuniform(0, NTOPIC - 1), intuniform(11, 35));
+            sendMsg(intuniform(0, NTOPIC - 1), intuniform(MIN_PUB_DELAY, MAX_PUB_DELAY));
 
-    if( rand() % 100 <= LEAVE_PROBABILITY * 100){
+    if( rand() % 100 <= CLIENT_LEAVE_PROBABILITY * 100){
         sendLeave();
     }
 }
@@ -228,7 +220,7 @@ void client::sendSubs(){
 
 void client::sendSubs(int delay) {
 
-    for (int i = 0; i < my_subs.size(); i++){
+    for (unsigned int i = 0; i < my_subs.size(); i++){
         if(my_subs[i] == true){
             Subscribe_msg *msg = new Subscribe_msg("subscribe");
                 msg->setSrcId(this->getId());
@@ -253,6 +245,11 @@ void client::displayMessage(Message_msg *m) {
               << " will display a message about topic: " << m->getTopic()
               << " with timestamp: " << m->getTimestamp() << endl;
     displayed++;
+
+    //Morevoer, we have a probability to reply
+    if (rand() % 100 <= REPLY_PROB * 100)
+        sendMsg(m->getTopic(), intuniform(MIN_REPLY_DELAY, MAX_REPLY_DELAY));
+
 }
 
 void client::finish()
