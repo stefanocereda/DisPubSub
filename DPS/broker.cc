@@ -482,7 +482,7 @@ void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
                 EV << "\n Broadcast of " << m->getFullName()
                           << " except-channel " << except_channel
                           << " sending-ch " << *chans_it;
-                Message_msg *copy = (Message_msg *) m->dup();
+                cMessage *copy = m->dup();
                 sendDelayed(copy, delay, "gate$o", *chans_it);
             }
         }
@@ -493,7 +493,7 @@ void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
 
         for (int i = 0; i < n; i++) {
             if (i != except_channel) {
-                Message_msg *copy = (Message_msg *) m->dup();
+                cMessage *copy = (cMessage *) m->dup();
                 sendDelayed(copy, delay, "gate$o", i);
             }
         }
