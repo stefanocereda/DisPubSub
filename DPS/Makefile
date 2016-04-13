@@ -39,8 +39,7 @@ OBJS = \
     $O/ack_leave_m.o \
     $O/join_m.o \
     $O/ack_join_m.o \
-    $O/subscribe_m.o \
-    $O/untitled_m.o
+    $O/subscribe_m.o
 
 # Message files
 MSGFILES = \
@@ -51,8 +50,7 @@ MSGFILES = \
     ack_leave.msg \
     join.msg \
     ack_join.msg \
-    subscribe.msg \
-    untitled.msg
+    subscribe.msg
 
 # SM files
 SMFILES =
@@ -180,6 +178,4 @@ $O/subscribe_m.o: subscribe_m.cc \
 	subscribe_m.h
 $O/unsubscribe_m.o: unsubscribe_m.cc \
 	unsubscribe_m.h
-$O/untitled_m.o: untitled_m.cc \
-	untitled_m.h
 

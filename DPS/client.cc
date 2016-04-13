@@ -40,6 +40,10 @@ private:
 
     void sendMsg(int topic, int delay);
     void sendSub(int topic, int delay);
+    void sendLeave();
+    void sendJoin(int delay);
+    void sendSubs();
+    void sendSubs(int delay);
 
     void handleMessageMessage(Message_msg *m);
     void displayMessage(Message_msg *m);
@@ -47,12 +51,9 @@ private:
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleBrokerJoinMessage(Join_msg *m);
 
-    void sendLeave();
-    void sendJoin(int delay);
-    void sendSubs();
-    void sendSubs(int delay);
-
     void bundleCycle();
+    bool isCasualConsistent(ts_map our_map, ts_map other_map, int sender);
+    void mergeVector(ts_map other_map,int sender);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -170,6 +171,7 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
 
 void client::handleMessageMessage(Message_msg *m) {
     int topic = m->getTopic();
+    int sender = m->getSenderId();
 
     //if I am not interested exit
     if (!my_subs[topic]) {
@@ -182,37 +184,22 @@ void client::handleMessageMessage(Message_msg *m) {
     ts_map my_ts = ts_struct[topic];
     ts_map msg_ts = m -> getTs_struct()[topic];
 
-    if (my_ts.find(m->getSenderId()) == my_ts.end()) //this is a new client, we trust him
-        for (int n = 0; n < NTOPIC; n++)
-            ts_struct[n][m->getSenderId()] = m->getTs_struct()[n][m->getSenderId()];
-    //HA SENSO PRENDERE TUTTO, ANCHE DI ALTRI CLIENT??
-    //no
+    if (my_ts.find(m->getSenderId()) == my_ts.end()) //this is a new client, we trust him about its own, but only for the current topic
+        ts_struct[topic][sender] = msg_ts[sender];
 
-    if (ts) {
+    //now we can compare the two vectors
+    if (isCasualConsistent(my_ts, msg_ts, sender)) {
         displayMessage(m);
-
-        if (my_ts < ts) {
-            //Merge vector
-            ts_vec[topic] = ts;
-            EV  << "\n" << "The client with id: " << this->getId()
-                      << " now has updated his timestamp to: " << ts_vec[topic];
-        }
-    } else if (m->isSelfMessage()) {
-        //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
-        EV << "The client with id: " << this->getId() << " lost "
-                  << ts - ts_vec[topic] << " messages";
-        displayMessage(m);
-        skipped += ts - ts_vec[topic];
-        ts_vec[topic] = ts;
-    } else //try to wait
-    {
+        mergeVector(msg_ts, sender);
+    }
+    else if (! m->isSelfMessage()) {
+        //try to wait for the missing messages
         scheduleAt(simTime() + RESEND_TIMEOUT, m->dup());
-        EV  << "\n"  << "The client with id: " << this->getId() << " and with timestamp: "
-                  << my_ts
-                  << " will delay the shipment of a message about topic: "
-                  << topic << " with timestamp: " << ts << " at time: "
-                  << simTime() + RESEND_TIMEOUT << endl;
-        rescheduled++;
+    }else{
+        //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
+        displayMessage(m);
+        skipped += msg_ts[sender] - ts_struct[topic][sender];
+        ts_struct[topic][sender] = msg_ts[sender];
     }
 }
 
@@ -255,13 +242,10 @@ void client::handleBrokerJoinMessage(Join_msg *m){
 }
 
 void client::displayMessage(Message_msg *m) {
-    EV  << "\n" << "The client with id: " << this->getId() << " and with timestamp: "
-              << ts_vec[m->getTopic()]
-              << " will display a message about topic: " << m->getTopic()
-              << " with timestamp: " << m->getTimestamp() << endl;
+    //TODO: display something
     displayed++;
 
-    //Morevoer, we have a probability to reply
+    //Moreover, we have a probability to reply
     if (rand() % 100 <= REPLY_PROB * 100)
         sendMsg(m->getTopic(), intuniform(MIN_REPLY_DELAY, MAX_REPLY_DELAY));
 
@@ -272,4 +256,33 @@ void client::finish()
     EV <<  boost::str(boost::format("c,%d,%d,%d,%d,%d,%d,%d")
             % this->getId() % numSubs % numPubs % wrongDispatch % displayed % rescheduled % skipped) << endl;
 }
+
+bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender){
+    //the received vector is casual consistent with out own if
+    //ts(r)[j] = V_k[j] + 1
+    //ts(r)[i] <= V_k[i] for all i != j
+
+    //we know for sure that the receiver is in our struct, since we merged it before
+    if (other_map[sender] != our_map[sender] + 1)
+        return false;
+
+    //now we check for the other clients.
+    //if we know about them and the other client does not, it is consistent (the message cannot be a reply)
+    //if the client knows about someone and we do not, they are not consistent and we should wait
+    for (ts_map::iterator it = other_map.begin(); it != other_map.end(); ++it){
+        if (it->first == sender)
+            continue;
+        if (our_map.find(it->first) == our_map.end())//we do not know this client
+            return false;
+        if (it->second > our_map[it->first]+1)
+            return false;
+    }
+
+    return true;
+}
+
+void client::mergeVector(ts_map other_map,int sender){
+    //we take
+}
+
 
