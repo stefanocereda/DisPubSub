@@ -130,6 +130,8 @@ void broker::handleMessage(cMessage *msg) {
             handleAckJoinMessage(dynamic_cast<Ack_join_msg*>(msg));
         } else if (strcmp("ack_leave", msg->getFullName()) == 0) {
             handleAckLeaveMessage(dynamic_cast<Ack_leave_msg*>(msg));
+        } else if (strcmp("unsubscribe", msg->getFullName()) == 0) {
+            return;
         } else {
             broadcast(msg, msg->getArrivalGate()->getIndex(), ALL_GATES);
         }
