@@ -11,14 +11,14 @@ const int NTOPIC = 5; //how many topics
 const int N_SEND = 15; //how many messages a client should send to a new broker
 const float SUBS_RATIO = 0.05; //the percentage of messages that should be a subscription
 
-const int MIN_SUB_DELAY = 0.5;//when to send the subscriptions
-const int MAX_SUB_DELAY = 10.0;
-const int MIN_PUB_DELAY = 5.0;//when to send the first publish
-const int MAX_PUB_DELAY = 10.0;
+const const_simtime_t MIN_SUB_DELAY = 0.5;//when to send the subscriptions
+const const_simtime_t MAX_SUB_DELAY = 10.0;
+const const_simtime_t MIN_PUB_DELAY = 5.0;//when to send the first publish
+const const_simtime_t MAX_PUB_DELAY = 10.0;
 
 const const_simtime_t RESEND_TIMEOUT = 10.0; //time to re send a self message waiting for the correct timestamp
 
-const float REPLY_PROB = 0.1; //the probability that a client answer to a message
+const float REPLY_PROB = 0.5; //the probability that a client answer to a message
 const const_simtime_t MIN_REPLY_DELAY = 1.0;//and the time to answer
 const const_simtime_t MAX_REPLY_DELAY = 5.0;
 

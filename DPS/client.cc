@@ -14,6 +14,8 @@
 #include "broker_init_m.h"
 #include "leave_m.h"
 #include "join_m.h"
+#include "ack_leave_m.h"
+#include "ack_join_m.h"
 
 #define ON 1
 #define OFF 0
@@ -207,7 +209,7 @@ void client::handleBrokerLeaveMessage(Leave_msg *m){
     //updateStatusLeave(m);
 
     //I ack a broker leave
-    Message_msg *msg = new Message_msg("ack_leave");
+    Ack_leave_msg *msg = new Ack_leave_msg("ack_leave");
     int channel = m->getArrivalGate()->getIndex();
     send(msg, "gate$o", channel);
 
@@ -232,7 +234,7 @@ void client::sendSubs(int delay) {
 
 void client::handleBrokerJoinMessage(Join_msg *m){
 
-    Message_msg *msg = new Message_msg("ack_join");
+    Ack_join_msg *msg = new Ack_join_msg("ack_join");
     int channel = m->getArrivalGate()->getIndex();
     send(msg, "gate$o", channel);
 

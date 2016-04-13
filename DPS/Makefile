@@ -38,7 +38,9 @@ OBJS = \
     $O/broker_init_m.o \
     $O/ack_leave_m.o \
     $O/join_m.o \
-    $O/subscribe_m.o
+    $O/ack_join_m.o \
+    $O/subscribe_m.o \
+    $O/untitled_m.o
 
 # Message files
 MSGFILES = \
@@ -48,7 +50,9 @@ MSGFILES = \
     broker_init.msg \
     ack_leave.msg \
     join.msg \
-    subscribe.msg
+    ack_join.msg \
+    subscribe.msg \
+    untitled.msg
 
 # SM files
 SMFILES =
@@ -141,9 +145,12 @@ depend:
 	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES) $(SM_CC_FILES)  ./*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+$O/ack_join_m.o: ack_join_m.cc \
+	ack_join_m.h
 $O/ack_leave_m.o: ack_leave_m.cc \
 	ack_leave_m.h
 $O/broker.o: broker.cc \
+	ack_join_m.h \
 	ack_leave_m.h \
 	broker_init_m.h \
 	join_m.h \
@@ -155,6 +162,8 @@ $O/broker.o: broker.cc \
 $O/broker_init_m.o: broker_init_m.cc \
 	broker_init_m.h
 $O/client.o: client.cc \
+	ack_join_m.h \
+	ack_leave_m.h \
 	broker_init_m.h \
 	join_m.h \
 	leave_m.h \
@@ -171,4 +180,6 @@ $O/subscribe_m.o: subscribe_m.cc \
 	subscribe_m.h
 $O/unsubscribe_m.o: unsubscribe_m.cc \
 	unsubscribe_m.h
+$O/untitled_m.o: untitled_m.cc \
+	untitled_m.h
 

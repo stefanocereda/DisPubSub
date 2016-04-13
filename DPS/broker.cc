@@ -21,6 +21,7 @@
 #include <future>
 #include <functional>
 #include <boost/format.hpp>
+#include <ack_join_m.h>
 
 using namespace omnetpp;
 
@@ -59,7 +60,7 @@ private:
     void handleBrokerJoinMessage(Join_msg *m);
     void handleUnsubscribeMessage(Unsubscribe_msg *m);
     void handleAckLeaveMessage(Ack_leave_msg *m);
-    void handleAckJoinMessage(cMessage *m);
+    void handleAckJoinMessage(Ack_join_msg *m);
     void sendBrokerLeaveMessage();
     void sendJoinMessage();
     void sendJoinMessage(int delay);
@@ -126,7 +127,7 @@ void broker::handleMessage(cMessage *msg) {
     } else { // In this case I work as hub
              // I have to send the message to all the connected brokers and clients except for the receiver
         if (strcmp("ack_join", msg->getFullName()) == 0) {
-            handleAckJoinMessage(msg);
+            handleAckJoinMessage(dynamic_cast<Ack_join_msg*>(msg));
         } else if (strcmp("ack_leave", msg->getFullName()) == 0) {
             handleAckLeaveMessage(dynamic_cast<Ack_leave_msg*>(msg));
         } else {
@@ -307,7 +308,7 @@ void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
     }
 }
 
-void broker::handleAckJoinMessage(cMessage *m) {
+void broker::handleAckJoinMessage(Ack_join_msg *m) {
 
     if (broker_hub_mode != NORMAL_EXE) {
         //The broker goes in normal execution
@@ -379,7 +380,7 @@ void broker::handleBrokerJoinMessage(Join_msg *m) {
 
     //   EV << "\nThe Broker with id: " << this->getId() << " read: " << m->getArrivalGate()->getIndex();
 
-    Message_msg *msg = new Message_msg("ack_join");
+    Ack_join_msg *msg = new Ack_join_msg("ack_join");
     int channel = m->getArrivalGate()->getIndex();
     send(msg, "gate$o", channel);
 
