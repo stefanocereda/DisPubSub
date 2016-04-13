@@ -53,7 +53,6 @@ private:
 
     void bundleCycle();
     bool isCasualConsistent(ts_map our_map, ts_map other_map, int sender);
-    void mergeVector(ts_map our_map, ts_map other_map,int sender);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -192,7 +191,7 @@ void client::handleMessageMessage(Message_msg *m) {
     //now we can compare the two vectors
     if (isCasualConsistent(my_ts, msg_ts, sender)) {
         displayMessage(m);
-        mergeVector(my_ts, msg_ts, sender);
+        ts_struct[topic][sender] = msg_ts[sender];
     }
     else if (! m->isSelfMessage()) {
         //try to wait for the missing messages
@@ -282,10 +281,4 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender){
 
     return true;
 }
-
-void client::mergeVector(ts_map our_map, ts_map other_map,int sender){
-    //TODO controllare sta roba che non sono sicuro
-    our_map[sender] = other_map[sender];
-}
-
 
