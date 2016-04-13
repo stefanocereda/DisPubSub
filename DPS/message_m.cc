@@ -166,7 +166,7 @@ Register_Class(Message_msg);
 Message_msg::Message_msg(const char *name, int kind) : ::omnetpp::cMessage(name,kind)
 {
     this->topic = 0;
-    this->timestamp = 0;
+    this->senderId = 0;
 }
 
 Message_msg::Message_msg(const Message_msg& other) : ::omnetpp::cMessage(other)
@@ -189,21 +189,24 @@ Message_msg& Message_msg::operator=(const Message_msg& other)
 void Message_msg::copy(const Message_msg& other)
 {
     this->topic = other.topic;
-    this->timestamp = other.timestamp;
+    this->ts_struct = other.ts_struct;
+    this->senderId = other.senderId;
 }
 
 void Message_msg::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::omnetpp::cMessage::parsimPack(b);
     doParsimPacking(b,this->topic);
-    doParsimPacking(b,this->timestamp);
+    doParsimPacking(b,this->ts_struct);
+    doParsimPacking(b,this->senderId);
 }
 
 void Message_msg::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::omnetpp::cMessage::parsimUnpack(b);
     doParsimUnpacking(b,this->topic);
-    doParsimUnpacking(b,this->timestamp);
+    doParsimUnpacking(b,this->ts_struct);
+    doParsimUnpacking(b,this->senderId);
 }
 
 int Message_msg::getTopic() const
@@ -216,14 +219,24 @@ void Message_msg::setTopic(int topic)
     this->topic = topic;
 }
 
-int Message_msg::getTimestamp() const
+ts_map_dict& Message_msg::getTs_struct()
 {
-    return this->timestamp;
+    return this->ts_struct;
 }
 
-void Message_msg::setTimestamp(int timestamp)
+void Message_msg::setTs_struct(const ts_map_dict& ts_struct)
 {
-    this->timestamp = timestamp;
+    this->ts_struct = ts_struct;
+}
+
+int Message_msg::getSenderId() const
+{
+    return this->senderId;
+}
+
+void Message_msg::setSenderId(int senderId)
+{
+    this->senderId = senderId;
 }
 
 class Message_msgDescriptor : public omnetpp::cClassDescriptor
@@ -290,7 +303,7 @@ const char *Message_msgDescriptor::getProperty(const char *propertyname) const
 int Message_msgDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 2+basedesc->getFieldCount() : 2;
+    return basedesc ? 3+basedesc->getFieldCount() : 3;
 }
 
 unsigned int Message_msgDescriptor::getFieldTypeFlags(int field) const
@@ -303,9 +316,10 @@ unsigned int Message_msgDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,
+        FD_ISCOMPOUND,
         FD_ISEDITABLE,
     };
-    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<3) ? fieldTypeFlags[field] : 0;
 }
 
 const char *Message_msgDescriptor::getFieldName(int field) const
@@ -318,9 +332,10 @@ const char *Message_msgDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "topic",
-        "timestamp",
+        "ts_struct",
+        "senderId",
     };
-    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<3) ? fieldNames[field] : nullptr;
 }
 
 int Message_msgDescriptor::findField(const char *fieldName) const
@@ -328,7 +343,8 @@ int Message_msgDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='t' && strcmp(fieldName, "topic")==0) return base+0;
-    if (fieldName[0]=='t' && strcmp(fieldName, "timestamp")==0) return base+1;
+    if (fieldName[0]=='t' && strcmp(fieldName, "ts_struct")==0) return base+1;
+    if (fieldName[0]=='s' && strcmp(fieldName, "senderId")==0) return base+2;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -342,9 +358,10 @@ const char *Message_msgDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "int",
+        "ts_map_dict",
         "int",
     };
-    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<3) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **Message_msgDescriptor::getFieldPropertyNames(int field) const
@@ -398,7 +415,8 @@ std::string Message_msgDescriptor::getFieldValueAsString(void *object, int field
     Message_msg *pp = (Message_msg *)object; (void)pp;
     switch (field) {
         case 0: return long2string(pp->getTopic());
-        case 1: return long2string(pp->getTimestamp());
+        case 1: {std::stringstream out; out << pp->getTs_struct(); return out.str();}
+        case 2: return long2string(pp->getSenderId());
         default: return "";
     }
 }
@@ -414,7 +432,7 @@ bool Message_msgDescriptor::setFieldValueAsString(void *object, int field, int i
     Message_msg *pp = (Message_msg *)object; (void)pp;
     switch (field) {
         case 0: pp->setTopic(string2long(value)); return true;
-        case 1: pp->setTimestamp(string2long(value)); return true;
+        case 2: pp->setSenderId(string2long(value)); return true;
         default: return false;
     }
 }
@@ -428,6 +446,7 @@ const char *Message_msgDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 1: return omnetpp::opp_typename(typeid(ts_map_dict));
         default: return nullptr;
     };
 }
@@ -442,6 +461,7 @@ void *Message_msgDescriptor::getFieldStructValuePointer(void *object, int field,
     }
     Message_msg *pp = (Message_msg *)object; (void)pp;
     switch (field) {
+        case 1: return (void *)(&pp->getTs_struct()); break;
         default: return nullptr;
     }
 }

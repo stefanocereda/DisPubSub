@@ -26,7 +26,9 @@ class client: public cSimpleModule {
 private:
     int working_modality;
 
-    std::vector<int> ts_vec;
+    typedef std::map<int, int> ts_map; //client->ts
+    typedef std::vector<ts_map> ts_map_dict; //topic -> client -> ts
+    ts_map_dict ts_struct;
     std::vector<bool> my_subs;
 
     int numSubs = 0,
@@ -60,7 +62,7 @@ protected:
 
 public:
     client() :
-            ts_vec(NTOPIC, 0), my_subs(NTOPIC, false) {
+        my_subs(NTOPIC, false) {
     }
 };
 
@@ -70,6 +72,9 @@ Define_Module(client);
 void client::initialize() {
     EV << this->getFullName() << " has id: " << this->getId() << endl;
     working_modality = ON;
+    for (int t = 0; t < NTOPIC; t++){
+        ts_struct[t][this->getId()] = 0;
+    }
 }
 
 //Subscribe to the given topic
@@ -92,7 +97,9 @@ void client::sendSub(int topic, int delay) {
 void client::sendMsg(int topic, int delay) {
     Message_msg *msg = new Message_msg("message");
     msg->setTopic(topic);
-    msg->setTimestamp(++ts_vec[topic]);
+    msg->setSenderId(this ->getId());
+    ts_struct[topic][this->getId()]++;
+    msg->setTs_struct(ts_struct);
 
     sendDelayed(msg, delay, "gate$o", 0);
     EV << "The client with id: " << this->getId()
@@ -172,10 +179,15 @@ void client::handleMessageMessage(Message_msg *m) {
     }
 
     //check the timestamp, if possible show the message, otherwise resend it as self message
-    int ts = m->getTimestamp();
-    int my_ts = ts_vec[topic];
+    ts_map my_ts = ts_struct[topic];
+    ts_map msg_ts = m -> getTs_struct()[topic];
 
-    if (!(my_ts + 1 < ts)) {
+    if (my_ts.find(m->getSenderId()) == my_ts.end()) //this is a new client, we trust him
+        for (int n = 0; n < NTOPIC; n++)
+            ts_struct[n][m->getSenderId()] = m->getTs_struct()[n][m->getSenderId()];
+    //HA SENSO PRENDERE TUTTO, ANCHE DI ALTRI CLIENT??
+
+    if (ts) {
         displayMessage(m);
 
         if (my_ts < ts) {

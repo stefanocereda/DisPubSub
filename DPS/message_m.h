@@ -15,13 +15,19 @@
 
 
 
+// cplusplus {{
+	#include <map>
+	typedef std::vector<std::map<int, int>> ts_map_dict;
+// }}
+
 /**
- * Class generated from <tt>message.msg:1</tt> by nedtool.
+ * Class generated from <tt>message.msg:8</tt> by nedtool.
  * <pre>
  * message Message_msg
  * {
  *     int topic;
- *     int timestamp;
+ *     ts_map_dict ts_struct;
+ *     int senderId;
  * }
  * </pre>
  */
@@ -29,7 +35,8 @@ class Message_msg : public ::omnetpp::cMessage
 {
   protected:
     int topic;
-    int timestamp;
+    ts_map_dict ts_struct;
+    int senderId;
 
   private:
     void copy(const Message_msg& other);
@@ -50,8 +57,11 @@ class Message_msg : public ::omnetpp::cMessage
     // field getter/setter methods
     virtual int getTopic() const;
     virtual void setTopic(int topic);
-    virtual int getTimestamp() const;
-    virtual void setTimestamp(int timestamp);
+    virtual ts_map_dict& getTs_struct();
+    virtual const ts_map_dict& getTs_struct() const {return const_cast<Message_msg*>(this)->getTs_struct();}
+    virtual void setTs_struct(const ts_map_dict& ts_struct);
+    virtual int getSenderId() const;
+    virtual void setSenderId(int senderId);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Message_msg& obj) {obj.parsimPack(b);}
