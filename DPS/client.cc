@@ -63,7 +63,7 @@ protected:
 
 public:
     client() :
-        my_subs(NTOPIC, false) {
+        my_subs(NTOPIC, false){
     }
 };
 
@@ -74,7 +74,9 @@ void client::initialize() {
     EV << this->getFullName() << " has id: " << this->getId() << endl;
     working_modality = ON;
     for (int t = 0; t < NTOPIC; t++){
-        ts_struct[t][this->getId()] = 0; //TODO error here
+        ts_map foo = ts_map();
+        foo[this->getId()] = 0;
+        ts_struct.push_back(foo);
     }
 }
 
