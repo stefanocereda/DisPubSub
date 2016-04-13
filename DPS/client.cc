@@ -186,6 +186,7 @@ void client::handleMessageMessage(Message_msg *m) {
         for (int n = 0; n < NTOPIC; n++)
             ts_struct[n][m->getSenderId()] = m->getTs_struct()[n][m->getSenderId()];
     //HA SENSO PRENDERE TUTTO, ANCHE DI ALTRI CLIENT??
+    //no
 
     if (ts) {
         displayMessage(m);
