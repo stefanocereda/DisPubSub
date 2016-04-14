@@ -163,9 +163,9 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
 
     SubscriptionTable::iterator it = subs_table.find(topic);
 
-    EV << "\nThe broker with id: " << this->getId()
+    /*EV << "\nThe broker with id: " << this->getId()
               << " received a subscribe for the topic: " << topic
-              << " from client with id: " << m->getSrcId() << "\n";
+              << " from client with id: " << m->getSrcId() << "\n";*/
 
     subs_counter[topic]++;
     if (it == subs_table.end()) { // New topic
@@ -267,19 +267,19 @@ void broker::updateStatusLeave(Leave_msg *m) {
                             "unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
-                    EV << "\n Broker with id " << this->getId()
+                    /*EV << "\n Broker with id " << this->getId()
                               << " unsubscribe to the topic "
                               << topics_it->first;
 
-                    EV << "\n current chan_list values: ";
+                    EV << "\n current chan_list values: ";*/
                     for (std::list<int>::iterator iter = chans_list.begin();
                             iter != chans_list.end(); iter++) {
-                        EV << *iter << " , ";
+                        /*EV << *iter << " , ";*/
                     }
 
-                    EV << "\n Broker with id " << this->getId()
+                    /*EV << "\n Broker with id " << this->getId()
                               << " BROADCAST the UNSUBSCRIBE";
-                    EV << "\n Except-Channel " << *chans_it;
+                    EV << "\n Except-Channel " << *chans_it;*/
                     broadcast(unsubscribe, *chans_it, ONLY_BROKERS);
 
                 }
@@ -300,7 +300,7 @@ void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
         //The broker becomes an hub
         broker_hub_mode = HUB_MODE;
 
-        EV << "\nBroker with id " << this->getId() << " is now a hub";
+        /*EV << "\nBroker with id " << this->getId() << " is now a hub";*/
 
         int awakeningDelay = intuniform(MIN_HUB_TIME, MAX_HUB_TIME);
 
@@ -331,8 +331,8 @@ void broker::sendBrokerLeaveMessage() {
     Leave_msg *leave = new Leave_msg("broker_leave");
     leave->setSrcId(this->getId());
 
-    EV << "\nThe Broker with id: " << this->getId()
-              << " wants to leave the network!";
+    /*EV << "\nThe Broker with id: " << this->getId()
+              << " wants to leave the network!";*/
 
     // The inverse may cause problem by still being in normal_exe even after the leave
     //   broker_hub_mode = HUB_MODE;
@@ -354,8 +354,8 @@ void broker::sendJoinMessage(int delay) {
     // I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
     Join_msg *join = new Join_msg("broker_join");
 
-    EV << "\nThe Broker with id: " << this->getId()
-              << " wants to join again the network! \n";
+    /*EV << "\nThe Broker with id: " << this->getId()
+              << " wants to join again the network! \n";*/
 
     broadcast(join, -1, ALL_GATES, delay);
 }
@@ -408,8 +408,8 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
     int topic = m->getTopic();
     int in_chan = m->getArrivalGate()->getIndex();
 
-    EV << " \n handling the unsubscribe-chain " << " for topic: " << topic
-              << " in_chan " << in_chan;
+    /*EV << " \n handling the unsubscribe-chain " << " for topic: " << topic
+              << " in_chan " << in_chan;*/
 
     // Get the iterator referred on the topic of the message
     SubscriptionTable::iterator topic_it = subs_table.find(topic);
@@ -435,9 +435,9 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
                             "unsubscribe");
                     unsubscribe->setTopic(topic);
 
-                    EV << "\nBroker with id " << this->getId()
+                    /*EV << "\nBroker with id " << this->getId()
                               << " continue the unsubscribe chain for "
-                              << topic_it->first;
+                              << topic_it->first;*/
 
                     // Send it in broadcast to only the connected brokers
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
@@ -456,7 +456,7 @@ void broker::bundleCycle() {
 
 void broker::broadcast(cMessage *m, int except_channel, int mode) {
 
-    EV << " \n IN-BROADCAST";
+    /*EV << " \n IN-BROADCAST";*/
 
     broadcast(m, except_channel, mode, 0);
 }
@@ -465,22 +465,22 @@ void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
     // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
 
     if (mode == ONLY_BROKERS) {
-        EV << "\n Before FOR list size: " << broker_gate_table.size();
+        /*EV << "\n Before FOR list size: " << broker_gate_table.size();*/
         for (std::list<int>::const_iterator chans_it =
                 broker_gate_table.begin(), end = broker_gate_table.end();
                 chans_it != end; ++chans_it) {
-            EV << " \n in for before IF " << *chans_it;
+            /*EV << " \n in for before IF " << *chans_it;*/
             if (*chans_it != except_channel) {
-                EV << "\n Broadcast of " << m->getFullName()
+                /*EV << "\n Broadcast of " << m->getFullName()
                           << " except-channel " << except_channel
-                          << " sending-ch " << *chans_it;
+                          << " sending-ch " << *chans_it;*/
                 cMessage *copy = m->dup();
                 sendDelayed(copy, delay, "gate$o", *chans_it);
             }
         }
     } else { // RealBroadcast that is to all the gates/channels
              // get the number of gates
-        EV << " \n Branch Else";
+        /*EV << " \n Branch Else";*/
         int n = gateSize("gate");
 
         for (int i = 0; i < n; i++) {
