@@ -7,7 +7,6 @@
 #include <string.h>
 #include <omnetpp.h>
 #include <vector>
-#include <boost/format.hpp>
 #include "subscribe_m.h"
 #include "parameters.h"
 #include "message_m.h"
@@ -257,11 +256,9 @@ void client::displayMessage(Message_msg *m) {
 }
 
 void client::finish() {
-    EV
-              << boost::str(
-                      boost::format("c,%d,%d,%d,%d,%d,%d,%d") % this->getId()
-                              % numSubs % numPubs % wrongDispatch % displayed
-                              % rescheduled % skipped) << endl;
+    EV << "c," << this->getId() << "," << numSubs << "," << numPubs << ","
+              << wrongDispatch << "," << displayed << "," << rescheduled << ","
+              << skipped << endl;
 }
 
 bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {

@@ -493,9 +493,6 @@ void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
 }
 
 void broker::finish() {
-    EV
-              << boost::str(
-                      boost::format("b,%d,%d,%d,%d,%d") % this->getId()
-                              % recSubs % sentSubs % recPubs % sentPubs)
-              << endl;
+    EV << "b," << this->getId() << "," << recSubs << "," << sentSubs << ","
+              << recPubs << "," << sentPubs << endl;
 }
