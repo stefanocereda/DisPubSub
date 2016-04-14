@@ -25,9 +25,9 @@
  * <pre>
  * message Message_msg
  * {
- *     int topic;
+ *     int topic = -1;
  *     ts_map_dict ts_struct;
- *     int senderId;
+ *     int senderId = -1;
  * }
  * </pre>
  */

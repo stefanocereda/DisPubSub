@@ -165,8 +165,8 @@ Register_Class(Subscribe_msg);
 
 Subscribe_msg::Subscribe_msg(const char *name, int kind) : ::omnetpp::cMessage(name,kind)
 {
-    this->srcId = 0;
-    this->topic = 0;
+    this->srcId = -1;
+    this->topic = -1;
 }
 
 Subscribe_msg::Subscribe_msg(const Subscribe_msg& other) : ::omnetpp::cMessage(other)

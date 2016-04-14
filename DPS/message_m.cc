@@ -165,8 +165,8 @@ Register_Class(Message_msg);
 
 Message_msg::Message_msg(const char *name, int kind) : ::omnetpp::cMessage(name,kind)
 {
-    this->topic = 0;
-    this->senderId = 0;
+    this->topic = -1;
+    this->senderId = -1;
 }
 
 Message_msg::Message_msg(const Message_msg& other) : ::omnetpp::cMessage(other)
