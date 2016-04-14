@@ -48,6 +48,7 @@ private:
 
     void bundleCycle();
     bool isCasualConsistent(ts_map our_map, ts_map other_map, int sender);
+    void mergeAllTs(ts_map other_map, int topic);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -154,17 +155,18 @@ void client::handleMessage(cMessage *msg) {
 void client::handleMessageBroker(Broker_init_msg *msg) {
     //We are attached to a new broker, send some subscriptions and some messages with random delays
     for (int i = 0; i < N_SEND; i++)
-        if (rand() % 100 < SUBS_RATIO * 100)
+        if (rand() % 100 < SUBS_RATIO * 100) {
             //send a sub
             sendSub(intuniform(0, NTOPIC - 1),
                     (const_simtime_t) (intuniform(MIN_SUB_DELAY * 100,
                             MAX_SUB_DELAY * 100)) / 100);
-        else
+        } else {
             //send a publish
             sendMsg(intuniform(0, NTOPIC - 1),
                     (const_simtime_t) (intuniform(MIN_PUB_DELAY * 100,
                             MAX_PUB_DELAY * 100)) / 100);
 
+        }
     if (rand() % 100 < CLIENT_LEAVE_PROBABILITY * 100) {
         sendLeave(
                 (const_simtime_t) (intuniform(MIN_LEAVE_DELAY * 100,
@@ -196,17 +198,21 @@ void client::handleMessageMessage(Message_msg *m) {
     //now we can compare the two vectors
     if (isCasualConsistent(ts_struct[topic], msg_ts, sender)) {
         displayMessage(m);
-        ts_struct[topic][sender] = msg_ts[sender]; //merge
+        ts_struct[topic][sender] = msg_ts[sender]; //merge the only relevant
+
     } else if (!m->isSelfMessage()) {
         //try to wait for the missing messages
         EV << "client " << this->getId() << " rescheduled a message" << endl;
+        rescheduled++;
         scheduleAt(simTime() + RESEND_TIMEOUT, m->dup());
+
     } else {
         //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
         EV << "client " << this->getId() << " gave up waiting" << endl;
         displayMessage(m);
-        skipped += msg_ts[sender] - ts_struct[topic][sender];
-        ts_struct[topic][sender] = msg_ts[sender];
+        skipped++;
+        //maybe the problem was not the sender, so we should merge everything
+        mergeAllTs(msg_ts, topic);
     }
 }
 
@@ -304,3 +310,19 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
     return true;
 }
 
+void client::mergeAllTs(ts_map other_map, int topic) {
+    //scan the other_map, for every found client merge in our map.
+    for (ts_map::iterator it = other_map.begin(); it != other_map.end(); ++it) {
+
+        if (ts_struct[topic].find(it->first) == ts_struct[topic].end()) {
+            //this is an unknown client
+            ts_struct[topic][it->first] = it->second;
+        }
+
+        else {
+            //take the max
+            if (ts_struct[topic][it->first] < it->second)
+                ts_struct[topic][it->first] = it->second;
+        }
+    }
+}
