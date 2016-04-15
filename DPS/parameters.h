@@ -7,8 +7,8 @@
 
 #include <omnetpp.h>
 
-const int NTOPIC = 2; //how many topics
-const int N_SEND = 5; //how many messages a client should send to a new broker
+const int NTOPIC = 5; //how many topics
+const int N_SEND = 0; //how many messages a client should send to a new broker
 const float SUBS_RATIO = 0.2; //the percentage of messages that should be a subscription
 
 const const_simtime_t MIN_SUB_DELAY = 0.5; //when to send the subscriptions

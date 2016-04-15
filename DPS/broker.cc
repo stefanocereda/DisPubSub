@@ -20,7 +20,6 @@
 #include <thread>
 #include <future>
 #include <functional>
-#include <boost/format.hpp>
 #include <ack_join_m.h>
 
 using namespace omnetpp;

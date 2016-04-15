@@ -73,6 +73,13 @@ void client::initialize() {
         foo[this->getId()] = 0;
         ts_struct.push_back(foo);
     }
+
+
+    /*just for testing*/
+    if (this->getId() == 18){
+        sendSub(1, 5.0);
+        sendLeave(10.0, 5.0);
+    }
 }
 
 //Subscribe to the given topic
