@@ -151,8 +151,6 @@ void broker::handleBrokerInitMessage(Broker_init_msg *m) {
         msg->setTopic(topic);
         send(msg, "gate$o", channel);
     }
-
-    free(m);
 }
 
 void broker::handleSubscribeMessage(Subscribe_msg *m) {
@@ -192,8 +190,6 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
             sentSubs++;
         }
     }
-
-    free(m);
 }
 
 void broker::handleMessageMessage(Message_msg *m) {
@@ -215,7 +211,6 @@ void broker::handleMessageMessage(Message_msg *m) {
         }
     }
 
-    free(m);
 }
 
 void broker::handleClientLeaveMessage(Leave_msg *m) {
@@ -313,7 +308,6 @@ void broker::updateStatusLeave(Leave_msg *m) {
         }
     }
 
-    free(m);
 }
 
 void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
