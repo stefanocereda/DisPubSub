@@ -76,6 +76,7 @@ void client::initialize() {
 
 
     /*just for testing*/
+#if MODE == CLIENT_LEAVE
     if (this->getId() == 18){
         sendSub(1, 5.0);
         sendLeave(10.0, 5.0);
@@ -87,6 +88,7 @@ void client::initialize() {
         sendMsg(1, 20.0);
         sendMsg(0, 22.0);
     }
+#endif
 }
 
 //Subscribe to the given topic
