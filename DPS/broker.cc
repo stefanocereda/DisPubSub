@@ -236,6 +236,8 @@ void broker::handleClientLeaveMessage(Leave_msg *m) {
 
 void broker::updateStatusLeave(Leave_msg *m) {
     // After a leave_client,leave_broker update all the lists and maybe start an unsubscribe event.
+    int c = 0;
+    EV << "ciao";
 
     // Understand who is the leaver
     int in_chan = m->getArrivalGate()->getIndex();
@@ -244,23 +246,36 @@ void broker::updateStatusLeave(Leave_msg *m) {
     std::list<int>::const_iterator chans_it, end_chan, chans_unsub_it,
             end_unsub_end;
 
+    EV << "\n ciao2" << c;
+
     // Iterate on topics
     for (topics_it = subs_table.begin(), end_topic = subs_table.end();
             topics_it != end_topic; ++topics_it) {
         std::list<int> *chans_list = &(topics_it->second);
 
+        c++;
+
+        bubble("\n INIT",c);
 
         // For each channel referred to the current topic
         for (chans_it = chans_list->begin(), end_chan = chans_list->end();
                 chans_it != end_chan; ++chans_it) {
 
+            c++;
+            EV << "\n  pre IF " << c;
+
             // If the current channel is the leaver I have to remove it
             if (*chans_it == in_chan) {
                 chans_it = chans_list->erase(chans_it);
                 subs_counter[topics_it->first]--;
+                c++;
+                EV << "\n if 1 " << c;
 
                 // If I have no more follower I start a new unsubscribe chain
                 if (subs_counter[topics_it->first] == 0) {
+                    c++;
+                    EV << "\n if2 " << c;
+
                     // Create a unsubscribe message referred to the current topic
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg(
                             "unsubscribe");
@@ -276,13 +291,23 @@ void broker::updateStatusLeave(Leave_msg *m) {
                         /*EV << *iter << " , ";*/
                     }
 
+
+                    EV << "\n POST EMPTY for " << c;
+
                     /*EV << "\n Broker with id " << this->getId()
                      << " BROADCAST the UNSUBSCRIBE";
                      EV << "\n Except-Channel " << *chans_it;*/
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
 
+
+                    EV << "\n PRE ERASE " << c;
+
                     //and also remove it from the map
                     subs_table.erase(topics_it);
+
+
+                    EV << "\n POSTERASE " << c;
+
                 }
             }
         }
