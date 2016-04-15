@@ -426,9 +426,7 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
 
             // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
             if (*chans_it == in_chan) {
-                int l = chans_list->size();
                 chans_it = chans_list->erase(chans_it);
-                l = chans_list->size();
                 subs_counter[topic_it->first]--;
 
                 // If I have no more follower I continue the already started unsubscribe chain
