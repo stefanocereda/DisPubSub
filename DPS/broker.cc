@@ -241,22 +241,23 @@ void broker::updateStatusLeave(Leave_msg *m) {
     // Understand who is the leaver
     int in_chan = m->getArrivalGate()->getIndex();
 
-    std::map<int, std::list<int>>::const_iterator topics_it, end_topic;
+    std::map<int, std::list<int>>::iterator topics_it, end_topic;
     std::list<int>::const_iterator chans_it, end_chan, chans_unsub_it,
             end_unsub_end;
 
     // Iterate on topics
     for (topics_it = subs_table.begin(), end_topic = subs_table.end();
             topics_it != end_topic; ++topics_it) {
-        std::list<int> chans_list = topics_it->second;
+        std::list<int> *chans_list = &(topics_it->second);
+
 
         // For each channel referred to the current topic
-        for (chans_it = chans_list.begin(), end_chan = chans_list.end();
+        for (chans_it = chans_list->begin(), end_chan = chans_list->end();
                 chans_it != end_chan; ++chans_it) {
 
             // If the current channel is the leaver I have to remove it
             if (*chans_it == in_chan) {
-                chans_it = chans_list.erase(chans_it);
+                chans_it = chans_list->erase(chans_it);
                 subs_counter[topics_it->first]--;
 
                 // If I have no more follower I start a new unsubscribe chain
@@ -271,15 +272,15 @@ void broker::updateStatusLeave(Leave_msg *m) {
                      << topics_it->first;
 
                      EV << "\n current chan_list values: ";*/
-                    for (std::list<int>::iterator iter = chans_list.begin();
-                            iter != chans_list.end(); iter++) {
+                    for (std::list<int>::iterator iter = chans_list->begin();
+                            iter != chans_list->end(); iter++) {
                         /*EV << *iter << " , ";*/
                     }
 
                     /*EV << "\n Broker with id " << this->getId()
                      << " BROADCAST the UNSUBSCRIBE";
                      EV << "\n Except-Channel " << *chans_it;*/
-                    broadcast(unsubscribe, *chans_it, ONLY_BROKERS);
+                    broadcast(unsubscribe, in_chan, ONLY_BROKERS);
 
                 }
             }
@@ -416,15 +417,17 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
     // If is not empty
     if (topic_it != subs_table.end()) {
         // I get the lists of subscribers to such a topic
-        std::list<int> chans_list = topic_it->second;
+        std::list<int> *chans_list = &(topic_it->second);
 
         // I basically iterate on such a lists of subscribers in order to find the one that unsubscribe and update the status
-        for (std::list<int>::const_iterator chans_it = chans_list.begin(), end =
-                chans_list.end(); chans_it != end; ++chans_it) {
+        for (std::list<int>::const_iterator chans_it = chans_list->begin(), end =
+                chans_list->end(); chans_it != end; ++chans_it) {
 
             // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
             if (*chans_it == in_chan) {
-                chans_it = chans_list.erase(chans_it);
+                int l = chans_list->size();
+                chans_it = chans_list->erase(chans_it);
+                l = chans_list->size();
                 subs_counter[topic_it->first]--;
 
                 // If I have no more follower I continue the already started unsubscribe chain

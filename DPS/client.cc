@@ -80,6 +80,13 @@ void client::initialize() {
         sendSub(1, 5.0);
         sendLeave(10.0, 5.0);
     }
+    else{
+        sendMsg(1, 6.0);
+        sendMsg(1, 12.0);
+        sendMsg(0, 13.0);
+        sendMsg(1, 20.0);
+        sendMsg(0, 22.0);
+    }
 }
 
 //Subscribe to the given topic
