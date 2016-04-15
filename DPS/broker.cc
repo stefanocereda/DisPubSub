@@ -173,7 +173,6 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
         toAdd.push_back(channel);
         //and add to the table
         subs_table.insert(std::pair<int, std::list<int>>(topic, toAdd));
-
     } else {
         //otherwise get the current list of interested channels
         std::list<int> old = it->second;
@@ -282,6 +281,8 @@ void broker::updateStatusLeave(Leave_msg *m) {
                      EV << "\n Except-Channel " << *chans_it;*/
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
 
+                    //and also remove it from the map
+                    subs_table.erase(topics_it);
                 }
             }
         }
@@ -443,6 +444,9 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
 
                     // Send it in broadcast to only the connected brokers
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
+
+                    //and also remove it from the map
+                    subs_table.erase(topic_it);
                 }
             }
         }
