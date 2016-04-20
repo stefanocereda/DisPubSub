@@ -99,6 +99,13 @@ void broker::initialize() {
         sendBrokerLeaveMessage();
     }
 
+    /*just for testing*/
+#if MODE == BROKER_LEAVE
+    if (this->getId() == 2){
+        sendBrokerLeaveMessage();
+        sendJoinMessage(25);
+    }
+#endif
 }
 
 void broker::handleMessage(cMessage *msg) {

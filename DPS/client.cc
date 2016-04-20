@@ -88,6 +88,16 @@ void client::initialize() {
         sendMsg(1, 20.0);
         sendMsg(0, 22.0);
     }
+#elif MODE == BROKER_LEAVE
+    if (this->getId() == 17){
+        sendSub(1, 5.0);
+    }
+    else if (this->getId() == 18)
+    {
+        sendMsg(1, 10.0);
+        sendMsg(1, 20.0);
+        sendMsg(1, 30.0);
+    }
 #endif
 }
 

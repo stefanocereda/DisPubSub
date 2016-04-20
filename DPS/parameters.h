@@ -11,11 +11,13 @@
 #define CLIENT_LEAVE 0
 //RANDOM per le statistiche
 #define RANDOM 1
+//BROKER_LEAVE per le broker leave con la star
+#define BROKER_LEAVE 2
 
 
-#define MODE RANDOM
+#define MODE BROKER_LEAVE
 
-#if MODE == CLIENT_LEAVE
+#if (MODE == CLIENT_LEAVE)||(MODE == BROKER_LEAVE)
     const int NTOPIC = 5; //how many topics
     const int N_SEND = 0; //how many messages a client should send to a new broker
     const float SUBS_RATIO = 0.2; //the percentage of messages that should be a subscription
@@ -40,8 +42,8 @@
     const float BROKER_LEAVE_PROBABILITY = 0.0;
     const const_simtime_t MIN_HUB_TIME = 3.0;
     const const_simtime_t MAX_HUB_TIME = 6.0;
-    const const_simtime_t MIN_BLEAVE_DELAY = 3.0;
-    const const_simtime_t MAX_BLEAVE_DELAY = 6.0;
+    const const_simtime_t MIN_BLEAVE_DELAY = 15.0;
+    const const_simtime_t MAX_BLEAVE_DELAY = 15.0;
 
 #elif MODE == RANDOM
     const int NTOPIC = 5; //how many topics
