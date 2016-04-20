@@ -13,7 +13,7 @@
 #define RANDOM 1
 
 
-#define MODE CLIENT_LEAVE
+#define MODE RANDOM
 
 #if MODE == CLIENT_LEAVE
     const int NTOPIC = 5; //how many topics
@@ -45,7 +45,7 @@
 
 #elif MODE == RANDOM
     const int NTOPIC = 5; //how many topics
-    const int N_SEND = 20; //how many messages a client should send to a new broker
+    const int N_SEND = 50; //how many messages a client should send to a new broker
     const float SUBS_RATIO = 0.2; //the percentage of messages that should be a subscription
 
     const const_simtime_t MIN_SUB_DELAY = 0.5; //when to send the subscriptions

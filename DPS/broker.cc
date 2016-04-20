@@ -278,6 +278,10 @@ void broker::updateStatusLeave(Leave_msg *m) {
 
                     //and also remove it from the map
                     subs_table.erase(topics_it);
+                    /*TODO
+                     * Il problema è qui. Togliendola non crasha ma poi il messaggio si blocca sull'ultimo broker.
+                     * Mettendola in try/catch crasha comunque
+                     */
                 }
             }
         }
