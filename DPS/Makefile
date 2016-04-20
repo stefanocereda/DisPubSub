@@ -15,7 +15,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I.
+INCLUDE_PATH = -I. -Iresults
 
 # Additional object and library files to link with
 EXTRA_OBJS =
@@ -32,25 +32,25 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/client.o \
     $O/broker.o \
-    $O/unsubscribe_m.o \
-    $O/message_m.o \
-    $O/leave_m.o \
-    $O/broker_init_m.o \
-    $O/ack_leave_m.o \
     $O/join_m.o \
+    $O/message_m.o \
+    $O/unsubscribe_m.o \
+    $O/broker_init_m.o \
     $O/ack_join_m.o \
-    $O/subscribe_m.o
+    $O/subscribe_m.o \
+    $O/leave_m.o \
+    $O/ack_leave_m.o
 
 # Message files
 MSGFILES = \
-    unsubscribe.msg \
-    message.msg \
-    leave.msg \
-    broker_init.msg \
-    ack_leave.msg \
     join.msg \
+    message.msg \
+    unsubscribe.msg \
+    broker_init.msg \
     ack_join.msg \
-    subscribe.msg
+    subscribe.msg \
+    leave.msg \
+    ack_leave.msg
 
 # SM files
 SMFILES =
@@ -134,13 +134,14 @@ clean:
 	$(Q)-rm -rf $O
 	$(Q)-rm -f DPS DPS.exe libDPS.so libDPS.a libDPS.dll libDPS.dylib
 	$(Q)-rm -f ./*_m.cc ./*_m.h ./*_sm.cc ./*_sm.h
+	$(Q)-rm -f results/*_m.cc results/*_m.h results/*_sm.cc results/*_sm.h
 
 cleanall: clean
 	$(Q)-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
 	$(qecho) Creating dependencies...
-	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES) $(SM_CC_FILES)  ./*.cc
+	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES) $(SM_CC_FILES)  ./*.cc results/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/ack_join_m.o: ack_join_m.cc \
