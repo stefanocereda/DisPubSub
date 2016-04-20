@@ -101,9 +101,8 @@ void broker::initialize() {
 
     /*just for testing*/
 #if MODE == BROKER_LEAVE
-    if (this->getId() == 2){
+    if (this->getId() == 2) {
         sendBrokerLeaveMessage();
-        sendJoinMessage(25);
     }
 #endif
 }
@@ -164,6 +163,7 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
     recSubs++;
     int topic = m->getTopic();
     int channel = m->getArrivalGate()->getIndex();
+    bool isNew = false;
 
     SubscriptionTable::iterator it = subs_table.find(topic);
 
@@ -171,30 +171,39 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
      << " received a subscribe for the topic: " << topic
      << " from client with id: " << m->getSrcId() << "\n";*/
 
-    subs_counter[topic]++;
     if (it == subs_table.end()) { // New topic
-            //build a new list
+        isNew = true;
+        subs_counter[topic]++;
+
+        //build a new list
         std::list<int> toAdd;
         toAdd.push_back(channel);
         //and add to the table
         subs_table.insert(std::pair<int, std::list<int>>(topic, toAdd));
+
     } else {
         //otherwise get the current list of interested channels
-        std::list<int> old = it->second;
+        std::list<int> *old = &(it->second);
         //check if the current channel is not already there
-        if (std::find(old.begin(), old.end(), channel) != old.end())
+        if (std::find(old->begin(), old->end(), channel) == old->end()) {
             //and add it
-            old.push_back(channel);
+            old->push_back(channel);
+            isNew = true;
+            subs_counter[topic]++;
+        }
     }
 
     //OK, now we should send the subscription to all the channels except the one where we have received it
-    for (std::list<int>::const_iterator iterator = broker_gate_table.begin(),
-            end = broker_gate_table.end(); iterator != end; ++iterator) {
-        if (*iterator != channel) {
-            // Duplicate message and send the copy.
-            Subscribe_msg *copy = (Subscribe_msg *) m->dup();
-            send(copy, "gate$o", *iterator);
-            sentSubs++;
+    if (isNew) {
+        for (std::list<int>::const_iterator iterator =
+                broker_gate_table.begin(), end = broker_gate_table.end();
+                iterator != end; ++iterator) {
+            if (*iterator != channel) {
+                // Duplicate message and send the copy.
+                Subscribe_msg *copy = (Subscribe_msg *) m->dup();
+                send(copy, "gate$o", *iterator);
+                sentSubs++;
+            }
         }
     }
 }
@@ -251,7 +260,6 @@ void broker::updateStatusLeave(Leave_msg *m) {
             topics_it != end_topic; ++topics_it) {
         std::list<int> *chans_list = &(topics_it->second);
 
-
         // For each channel referred to the current topic
         for (chans_it = chans_list->begin(), end_chan = chans_list->end();
                 chans_it != end_chan; ++chans_it) {
@@ -279,12 +287,10 @@ void broker::updateStatusLeave(Leave_msg *m) {
                         /*EV << *iter << " , ";*/
                     }
 
-
                     /*EV << "\n Broker with id " << this->getId()
                      << " BROADCAST the UNSUBSCRIBE";
                      EV << "\n Except-Channel " << *chans_it;*/
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
-
 
                     //and also remove it from the map
                     subs_table.erase(topics_it);
@@ -300,11 +306,18 @@ void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
 
     if (broker_hub_mode == HUB_MODE && this->getId() == m->getDestId()) {
         return;
+
     } else if (broker_hub_mode == NORMAL_EXE
             && this->getId() == m->getDestId()) {
 
         //The broker becomes an hub
         broker_hub_mode = HUB_MODE;
+
+        //Reset everything
+        subs_table.clear();
+
+        for (int i = 0; i < NTOPIC; ++i)
+            subs_counter[i] = 0;
 
         /*EV << "\nBroker with id " << this->getId() << " is now a hub";*/
 
@@ -400,6 +413,14 @@ void broker::handleBrokerJoinMessage(Join_msg *m) {
     for (SubscriptionTable::const_iterator subs_it = subs_table.begin(), end =
             subs_table.end(); subs_it != end; ++subs_it) {
         int topic = subs_it->first;
+
+        //if the only subscriber is the same broker we should not send it the subscription
+        if (subs_it->second.size() == 1
+                && std::find(subs_it->second.begin(), subs_it->second.end(),
+                        channel) != subs_it->second.end()) {
+            continue;
+        }
+
         Subscribe_msg *m = new Subscribe_msg("subscribe");
         m->setSrcId(this->getId());
         m->setTopic(topic);
@@ -408,26 +429,26 @@ void broker::handleBrokerJoinMessage(Join_msg *m) {
 }
 
 void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
-    // Handle the unsubscribe message as a leave on a specific topic
+// Handle the unsubscribe message as a leave on a specific topic
 
-    // Get the topic and the unsubscriber_channel from the message
+// Get the topic and the unsubscriber_channel from the message
     int topic = m->getTopic();
     int in_chan = m->getArrivalGate()->getIndex();
 
     /*EV << " \n handling the unsubscribe-chain " << " for topic: " << topic
      << " in_chan " << in_chan;*/
 
-    // Get the iterator referred on the topic of the message
+// Get the iterator referred on the topic of the message
     SubscriptionTable::iterator topic_it = subs_table.find(topic);
 
-    // If is not empty
+// If is not empty
     if (topic_it != subs_table.end()) {
         // I get the lists of subscribers to such a topic
         std::list<int> *chans_list = &(topic_it->second);
 
         // I basically iterate on such a lists of subscribers in order to find the one that unsubscribe and update the status
-        for (std::list<int>::const_iterator chans_it = chans_list->begin(), end =
-                chans_list->end(); chans_it != end; ++chans_it) {
+        for (std::list<int>::const_iterator chans_it = chans_list->begin(),
+                end = chans_list->end(); chans_it != end; ++chans_it) {
 
             // If the current channel is the unsubscriber I have to remove it from the subscribers of this topic and decrement the subs_counter
             if (*chans_it == in_chan) {
@@ -457,9 +478,9 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
 }
 
 void broker::bundleCycle() {
-    // Bundle Cycle to call the join
+// Bundle Cycle to call the join
 
-    //EV << "\nBroker with id " << this->getId() << " has rejoin the network!";
+//EV << "\nBroker with id " << this->getId() << " has rejoin the network!";
     return;
 }
 
@@ -471,7 +492,7 @@ void broker::broadcast(cMessage *m, int except_channel, int mode) {
 }
 
 void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
-    // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
+// Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
 
     if (mode == ONLY_BROKERS) {
         /*EV << "\n Before FOR list size: " << broker_gate_table.size();*/
@@ -488,7 +509,7 @@ void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
             }
         }
     } else { // RealBroadcast that is to all the gates/channels
-             // get the number of gates
+// get the number of gates
         /*EV << " \n Branch Else";*/
         int n = gateSize("gate");
 

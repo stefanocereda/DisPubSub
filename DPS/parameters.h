@@ -40,8 +40,8 @@
     const const_simtime_t MAX_REJOIN_DELAY = 6.0;
 
     const float BROKER_LEAVE_PROBABILITY = 0.0;
-    const const_simtime_t MIN_HUB_TIME = 3.0;
-    const const_simtime_t MAX_HUB_TIME = 6.0;
+    const const_simtime_t MIN_HUB_TIME = 5.0;
+    const const_simtime_t MAX_HUB_TIME = 5.0;
     const const_simtime_t MIN_BLEAVE_DELAY = 15.0;
     const const_simtime_t MAX_BLEAVE_DELAY = 15.0;
 
