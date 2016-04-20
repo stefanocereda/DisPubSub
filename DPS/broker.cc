@@ -256,6 +256,7 @@ void broker::updateStatusLeave(Leave_msg *m) {
 
                 // If I have no more follower I start a new unsubscribe chain
                 if (subs_counter[topics_it->first] == 0) {
+
                     // Create a unsubscribe message referred to the current topic
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg(
                             "unsubscribe");
@@ -271,17 +272,16 @@ void broker::updateStatusLeave(Leave_msg *m) {
                         /*EV << *iter << " , ";*/
                     }
 
+
                     /*EV << "\n Broker with id " << this->getId()
                      << " BROADCAST the UNSUBSCRIBE";
                      EV << "\n Except-Channel " << *chans_it;*/
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
 
+
                     //and also remove it from the map
                     subs_table.erase(topics_it);
-                    /*TODO
-                     * Il problema è qui. Togliendola non crasha ma poi il messaggio si blocca sull'ultimo broker.
-                     * Mettendola in try/catch crasha comunque
-                     */
+
                 }
             }
         }
