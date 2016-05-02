@@ -18,7 +18,7 @@
 \documentclass{beamer}
 \usepackage[utf8]{inputenc}
 
-\usepackage{multimedia}
+\usepackage{media9}
 
 \mode<presentation> {
 
@@ -148,17 +148,55 @@ Politecnico di Milano \\ % Your institution for the title page
 %------------------------------------------------
 \section{Simulazione casistiche}
 %------------------------------------------------
-\subsection{Client Leave}
+\subsection{Client Leave/join}
 
 \begin{frame}
-	\frametitle{Client Leave}
+\frametitle{Client Leave/join}
+
+Vediamo adesso i punti salienti della simulazione della client leave/join:
+\begin{itemize}
+	\item Fase di inizializzazione della rete.
+	\item Funzionamento \emph{normale} della rete con scambio di messaggi.
+	\item \emph{Client1} performa una leave.
+	\item La rete aggiorna le proprie tabelle di routing considerando che il client1 si sia disconnesso.
+	\item \emph{Client} pubblica messaggi che sarebbero arrivati al \emph{client1} ma che adesso, giustamente, non gli giungono più.
+	\item Il \emph{client1} torna a far parte della rete con una join.
+	\item Il \emph{client1} riceve adesso correttamente i messaggi a cui era interessato.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+
 	
-%	\includemovie[poster,autoplay,externalviewer, text={\small(/Users/home/omnetpp-5.0/samples/DistPubSub/DPS/Video/client_leave_join.mp4)}]{6cm}{6cm}{bloch.mp4}
+\includemedia[activate=pageopen,addresource=Video/clientleavejoin.flv,windowed=1024x768,flashvars={source=Video/clientleavejoin.flv}]{}{VPlayer.swf}
+
+\end{frame}
+
+\subsection{Broker Leave/join}
+
+\begin{frame}
+	\frametitle{Broker Leave/join}
+	
+	Vediamo adesso i punti salienti della simulazione della broker leave/join:
+	\begin{itemize}
+		\item Fase di inizializzazione della rete.
+		\item Funzionamento \emph{normale} della rete con scambio di messaggi correttamente inoltrati secondo le subscriptions.
+		\item \emph{Broker} performa una leave ed entra in \emph{hub mode}.
+		\item La rete continua a funzionare senza il contributo di \emph{borker}.
+		\item \emph{Broker} effettua una join e, i broker vicini, gli comunicano quali fossero le subscriptions a cui era interessato prima della leave.
+		\item La rete torna a funzionare come prima della leave, con un corretto inoltro dei messaggi da parte di \emph{broker}.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	
+	
+	\includemedia[activate=pageopen,addresource=Video/brokerleavejoinofficial.flv,windowed=1024x768,flashvars={source=Video/brokerleavejoinofficial.flv}]{}{VPlayer.swf}
 	
 \end{frame}
 
-
-
+%Video/client_leave_join.mp4
+\section{Conclusione}
 \begin{frame}
 	\Huge{\centerline{The End}}
 \end{frame}
