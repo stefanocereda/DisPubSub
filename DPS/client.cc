@@ -26,14 +26,15 @@ private:
     int working_modality;
 
     typedef std::map<int, int> ts_map; //client->ts
-    typedef std::vector<ts_map> ts_map_dict; //topic -> client -> ts
-    ts_map_dict ts_struct;
+    typedef std::vector<ts_map> ts_map_vect; //topic -> client -> ts
+    ts_map_vect ts_struct;
     std::vector<bool> my_subs;
 
     int numSubs = 0, numPubs = 0, wrongDispatch = 0, displayed = 0,
             rescheduled = 0, skipped = 0;
 
     void sendMsg(int topic, const_simtime_t delay);
+    void sendMsg(int topic, const_simtime_t delay, char content);
     void sendSub(int topic, const_simtime_t delay);
     void sendLeave(const_simtime_t delay, const_simtime_t join_drift);
     void reSendSubs(const_simtime_t delay);
@@ -49,6 +50,8 @@ private:
     void bundleCycle();
     bool isCasualConsistent(ts_map our_map, ts_map other_map, int sender);
     void mergeAllTs(ts_map other_map, int topic);
+
+    void print(ts_map_vect s);
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -75,6 +78,9 @@ void client::initialize() {
 
     /*just for testing*/
 #if MODE == CLIENT_LEAVE
+    /*
+     * SE I MESSAGGI LI MANDIAMO TUTTI ALL'INIZIO POI SI SBRAGA TUTTO, VANNO MANDATI COME RISPOSTE
+     */
     if (this->getId() == 18) {
         sendSub(1, 5.0);
         sendLeave(10.0, 5.0);
@@ -97,6 +103,26 @@ void client::initialize() {
     } else if (this->getId() == 15) {
         sendMsg(1, 20.5);
     }
+
+#elif MODE == CONSISTENCY
+    if (this -> getId() == 3){
+        sendMsg(1, 5.0, '1'); //msg 1 [1 - -]
+    }
+
+    else if (this -> getId() == 4){
+        sendSub(1, 1.0);
+
+        sendMsg(1, 5.0, '2');//concurrent 2 [- 1 -]
+    }
+
+    else if (this -> getId() == 5){
+        sendSub(1, 1.0);
+        //we must display 1/2, 3
+        //we must receive 3,2,1
+
+        //receive 3 -> [1 2 -] => [- 1 0]
+    }
+
 #endif
 }
 
@@ -116,9 +142,14 @@ void client::sendSub(int topic, const_simtime_t delay) {
 
 //Send a message for the given topic
 void client::sendMsg(int topic, const_simtime_t delay) {
+    sendMsg(topic, delay, 'a');
+}
+
+void client::sendMsg(int topic, const_simtime_t delay, char content) {
     Message_msg *msg = new Message_msg("message");
     msg->setTopic(topic);
     msg->setSenderId(this->getId());
+    msg->setContent(content);
 
     ts_struct[topic][this->getId()]++;
     msg->setTs_struct(ts_struct);
@@ -126,6 +157,7 @@ void client::sendMsg(int topic, const_simtime_t delay) {
     sendDelayed(msg, delay, "gate$o", 0);
     numPubs++;
 }
+
 
 void client::sendLeave(const_simtime_t delay, const_simtime_t join_drift) {
     Leave_msg *leave = new Leave_msg("client_leave");
@@ -175,10 +207,7 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
                             MAX_SUB_DELAY * 100)) / 100);
         } else {
             //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1),
-                    (const_simtime_t) (intuniform(MIN_PUB_DELAY * 100,
-                            MAX_PUB_DELAY * 100)) / 100);
-
+            sendMsg(intuniform(0, NTOPIC - 1), 0);
         }
 
     //and maybe a leave
@@ -188,6 +217,15 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
                         MAX_LEAVE_DELAY * 100)) / 100,
                 (const_simtime_t) (intuniform(MIN_REJOIN_DELAY * 100,
                         MAX_REJOIN_DELAY * 100)) / 100);
+    }
+}
+
+void client::print(ts_map_vect s){
+    for (int t = 0; t < NTOPIC; t++) {
+        for (ts_map::iterator it = s[t].begin(); it != s[t].end(); ++it){
+            EV << it->first << "->" << s[t][it->first] << "\t";
+        }
+        EV << "topic " << t << endl;
     }
 }
 
@@ -206,9 +244,17 @@ void client::handleMessageMessage(Message_msg *m) {
     //check the timestamp, if possible show the message, otherwise resend it as self message
     ts_map my_ts = ts_struct[topic];
     ts_map msg_ts = m->getTs_struct()[topic];
+    EV << "msg" << endl;
+    print(m->getTs_struct());
 
-    if (my_ts.find(m->getSenderId()) == my_ts.end()) //this is a new client, we trust him about its own, but only for the current topic
-        ts_struct[topic][sender] = msg_ts[sender] - 1; //-1 because we still do not know about this message
+
+    if (my_ts.find(m->getSenderId()) == my_ts.end()){ //this is a new client, we trust him about its own, but only for the current topic
+        EV << "old" << endl;
+        print(ts_struct);
+        ts_struct[topic][sender] = msg_ts[sender] - 1;
+        EV << "new" << endl;
+        print(ts_struct);
+    }
 
     //now we can compare the two vectors
     if (isCasualConsistent(ts_struct[topic], msg_ts, sender)) {
@@ -256,7 +302,7 @@ void client::handleBrokerJoinMessage(Join_msg *m) {
 }
 
 void client::displayMessage(Message_msg *m) {
-    EV << "client " << this->getId() << " shows a message" << endl;
+    EV << this->getFullName() << " shows a message with content " << m->getContent() << endl;
     displayed++;
 
     //Moreover, we have a probability to reply
@@ -264,6 +310,11 @@ void client::displayMessage(Message_msg *m) {
         sendMsg(m->getTopic(),
                 (const_simtime_t) (intuniform(MIN_REPLY_DELAY * 100,
                         MAX_REPLY_DELAY * 100)) / 100);
+
+#ifdef MODE CONSISTENCY
+    if (this -> getId() == 4)
+          sendMsg(1, 0.0, '3'); //answer to msg 1 [1 2 -]
+#endif
 
 }
 
@@ -280,7 +331,7 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
 
     //we know for sure that the receiver is in our struct, since we merged it before
     if (other_map[sender] != our_map[sender] + 1) {
-        EV << "client " << this->getId() << " received a message from client "
+        EV << this->getFullName() << " received a message from client "
                   << sender << " but waits to show because the sender ts is"
                   << other_map[sender] << " and our is " << our_map[sender]
                   << endl;
@@ -293,6 +344,7 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
     for (ts_map::iterator it = other_map.begin(); it != other_map.end(); ++it) {
         if (it->first == sender)
             continue;
+
         if (our_map.find(it->first) == our_map.end()) { //we do not know this client
             EV << "client " << this->getId()
                       << " received a message from client " << sender
@@ -300,6 +352,7 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
                       << it->first << " and we do not." << endl;
             return false;
         }
+
         if (it->second > our_map[it->first] + 1)
             EV << "client " << this->getId()
                       << " received a message from client " << sender

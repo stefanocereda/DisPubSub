@@ -28,6 +28,7 @@
  *     int topic = -1;
  *     ts_map_dict ts_struct;
  *     int senderId = -1;
+ *     char content = 'a';
  * }
  * </pre>
  */
@@ -37,6 +38,7 @@ class Message_msg : public ::omnetpp::cMessage
     int topic;
     ts_map_dict ts_struct;
     int senderId;
+    char content;
 
   private:
     void copy(const Message_msg& other);
@@ -62,6 +64,8 @@ class Message_msg : public ::omnetpp::cMessage
     virtual void setTs_struct(const ts_map_dict& ts_struct);
     virtual int getSenderId() const;
     virtual void setSenderId(int senderId);
+    virtual char getContent() const;
+    virtual void setContent(char content);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Message_msg& obj) {obj.parsimPack(b);}

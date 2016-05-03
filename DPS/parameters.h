@@ -13,11 +13,14 @@
 #define RANDOM 1
 //BROKER_LEAVE per le broker leave con la star
 #define BROKER_LEAVE 2
+//CONSISTENCY per vedere la consistency con Network
+#define CONSISTENCY 3
 
 
-#define MODE BROKER_LEAVE
 
-#if (MODE == CLIENT_LEAVE)||(MODE == BROKER_LEAVE)
+#define MODE CONSISTENCY
+
+#if (MODE == CLIENT_LEAVE)||(MODE == BROKER_LEAVE)||(MODE == CONSISTENCY)
     const int NTOPIC = 5; //how many topics
     const int N_SEND = 0; //how many messages a client should send to a new broker
     const float SUBS_RATIO = 0.2; //the percentage of messages that should be a subscription
@@ -27,7 +30,7 @@
     const const_simtime_t MIN_PUB_DELAY = 5.0; //when to send the first publish
     const const_simtime_t MAX_PUB_DELAY = 15.0;
 
-    const const_simtime_t RESEND_TIMEOUT = 10.0; //time to re send a self message waiting for the correct timestamp
+    const const_simtime_t RESEND_TIMEOUT = 100.0; //time to re send a self message waiting for the correct timestamp
 
     const float REPLY_PROB = 0.0; //the probability that a client answer to a message
     const const_simtime_t MIN_REPLY_DELAY = 1.0; //and the time to answer

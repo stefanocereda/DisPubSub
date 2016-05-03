@@ -167,6 +167,7 @@ Message_msg::Message_msg(const char *name, int kind) : ::omnetpp::cMessage(name,
 {
     this->topic = -1;
     this->senderId = -1;
+    this->content = 'a';
 }
 
 Message_msg::Message_msg(const Message_msg& other) : ::omnetpp::cMessage(other)
@@ -191,6 +192,7 @@ void Message_msg::copy(const Message_msg& other)
     this->topic = other.topic;
     this->ts_struct = other.ts_struct;
     this->senderId = other.senderId;
+    this->content = other.content;
 }
 
 void Message_msg::parsimPack(omnetpp::cCommBuffer *b) const
@@ -199,6 +201,7 @@ void Message_msg::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->topic);
     doParsimPacking(b,this->ts_struct);
     doParsimPacking(b,this->senderId);
+    doParsimPacking(b,this->content);
 }
 
 void Message_msg::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -207,6 +210,7 @@ void Message_msg::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->topic);
     doParsimUnpacking(b,this->ts_struct);
     doParsimUnpacking(b,this->senderId);
+    doParsimUnpacking(b,this->content);
 }
 
 int Message_msg::getTopic() const
@@ -237,6 +241,16 @@ int Message_msg::getSenderId() const
 void Message_msg::setSenderId(int senderId)
 {
     this->senderId = senderId;
+}
+
+char Message_msg::getContent() const
+{
+    return this->content;
+}
+
+void Message_msg::setContent(char content)
+{
+    this->content = content;
 }
 
 class Message_msgDescriptor : public omnetpp::cClassDescriptor
@@ -303,7 +317,7 @@ const char *Message_msgDescriptor::getProperty(const char *propertyname) const
 int Message_msgDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 3+basedesc->getFieldCount() : 3;
+    return basedesc ? 4+basedesc->getFieldCount() : 4;
 }
 
 unsigned int Message_msgDescriptor::getFieldTypeFlags(int field) const
@@ -318,8 +332,9 @@ unsigned int Message_msgDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISCOMPOUND,
         FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<3) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<4) ? fieldTypeFlags[field] : 0;
 }
 
 const char *Message_msgDescriptor::getFieldName(int field) const
@@ -334,8 +349,9 @@ const char *Message_msgDescriptor::getFieldName(int field) const
         "topic",
         "ts_struct",
         "senderId",
+        "content",
     };
-    return (field>=0 && field<3) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<4) ? fieldNames[field] : nullptr;
 }
 
 int Message_msgDescriptor::findField(const char *fieldName) const
@@ -345,6 +361,7 @@ int Message_msgDescriptor::findField(const char *fieldName) const
     if (fieldName[0]=='t' && strcmp(fieldName, "topic")==0) return base+0;
     if (fieldName[0]=='t' && strcmp(fieldName, "ts_struct")==0) return base+1;
     if (fieldName[0]=='s' && strcmp(fieldName, "senderId")==0) return base+2;
+    if (fieldName[0]=='c' && strcmp(fieldName, "content")==0) return base+3;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -360,8 +377,9 @@ const char *Message_msgDescriptor::getFieldTypeString(int field) const
         "int",
         "ts_map_dict",
         "int",
+        "char",
     };
-    return (field>=0 && field<3) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<4) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **Message_msgDescriptor::getFieldPropertyNames(int field) const
@@ -417,6 +435,7 @@ std::string Message_msgDescriptor::getFieldValueAsString(void *object, int field
         case 0: return long2string(pp->getTopic());
         case 1: {std::stringstream out; out << pp->getTs_struct(); return out.str();}
         case 2: return long2string(pp->getSenderId());
+        case 3: return long2string(pp->getContent());
         default: return "";
     }
 }
@@ -433,6 +452,7 @@ bool Message_msgDescriptor::setFieldValueAsString(void *object, int field, int i
     switch (field) {
         case 0: pp->setTopic(string2long(value)); return true;
         case 2: pp->setSenderId(string2long(value)); return true;
+        case 3: pp->setContent(string2long(value)); return true;
         default: return false;
     }
 }
