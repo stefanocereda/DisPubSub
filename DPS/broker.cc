@@ -127,15 +127,13 @@ void broker::handleMessage(cMessage *msg) {
             handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if (strcmp("unsubscribe", msg->getFullName()) == 0) {
             handleUnsubscribeMessage(dynamic_cast<Unsubscribe_msg*>(msg));
-        } else if (strcmp("ack_leave", msg->getFullName()) == 0) {
-            handleAckLeaveMessage(dynamic_cast<Ack_leave_msg*>(msg));
         }
+        else
+            EV << "unknown message" << endl;
     } else { // In this case I work as hub
              // I have to send the message to all the connected brokers and clients except for the receiver
         if (strcmp("ack_join", msg->getFullName()) == 0) {
             handleAckJoinMessage(dynamic_cast<Ack_join_msg*>(msg));
-        } else if (strcmp("ack_leave", msg->getFullName()) == 0) {
-            handleAckLeaveMessage(dynamic_cast<Ack_leave_msg*>(msg));
         } else if (strcmp("unsubscribe", msg->getFullName()) == 0) {
             return;
         } else {
@@ -168,9 +166,6 @@ void broker::handleSubscribeMessage(Subscribe_msg *m) {
 
     SubscriptionTable::iterator it = subs_table.find(topic);
 
-    /*EV << "\nThe broker with id: " << this->getId()
-     << " received a subscribe for the topic: " << topic
-     << " from client with id: " << m->getSrcId() << "\n";*/
 
     if (it == subs_table.end()) { // New topic
         isNew = true;
@@ -303,10 +298,6 @@ void broker::updateStatusLeave(Leave_msg *m) {
 
 }
 
-void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
-
-}
-
 void broker::handleAckJoinMessage(Ack_join_msg *m) {
 
     if (broker_hub_mode != NORMAL_EXE) {
@@ -315,10 +306,6 @@ void broker::handleAckJoinMessage(Ack_join_msg *m) {
 
     }
 
-}
-
-void broker::handleClientJoinMessage(Join_msg *m) {
-    // TODO
 }
 
 //We are leaving, send a self message for timing
@@ -437,17 +424,7 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
     }
 }
 
-void broker::bundleCycle() {
-// Bundle Cycle to call the join
-
-//EV << "\nBroker with id " << this->getId() << " has rejoin the network!";
-    return;
-}
-
 void broker::broadcast(cMessage *m, int except_channel, int mode) {
-
-    /*EV << " \n IN-BROADCAST";*/
-
     broadcast(m, except_channel, mode, 0);
 }
 
@@ -455,22 +432,18 @@ void broker::broadcast(cMessage *m, int except_channel, int mode, int delay) {
 // Method that sends a message in broadcasts to all the brokers channels except from the one from which has receives it
 
     if (mode == ONLY_BROKERS) {
-        /*EV << "\n Before FOR list size: " << broker_gate_table.size();*/
+
         for (std::list<int>::const_iterator chans_it =
                 broker_gate_table.begin(), end = broker_gate_table.end();
                 chans_it != end; ++chans_it) {
-            /*EV << " \n in for before IF " << *chans_it;*/
+
             if (*chans_it != except_channel) {
-                /*EV << "\n Broadcast of " << m->getFullName()
-                 << " except-channel " << except_channel
-                 << " sending-ch " << *chans_it;*/
                 cMessage *copy = m->dup();
                 sendDelayed(copy, delay, "gate$o", *chans_it);
             }
         }
     } else { // RealBroadcast that is to all the gates/channels
 // get the number of gates
-        /*EV << " \n Branch Else";*/
         int n = gateSize("gate");
 
         for (int i = 0; i < n; i++) {
