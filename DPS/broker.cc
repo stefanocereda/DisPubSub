@@ -21,6 +21,7 @@
 #include <future>
 #include <functional>
 #include <ack_join_m.h>
+#include <assert.h>
 
 using namespace omnetpp;
 
@@ -84,6 +85,7 @@ Define_Module(broker);
 
 //Tell everybody that we are up and running :)
 void broker::initialize() {
+    broker_hub_mode = NORMAL_EXE;
 
     int n = gateSize("gate");
 
@@ -93,8 +95,7 @@ void broker::initialize() {
         send(msg, "gate$o", i);
     }
 
-    broker_hub_mode = NORMAL_EXE;
-
+    //will this broker leave?
     if (rand() % 100 <= BROKER_LEAVE_PROBABILITY * 100) {
         sendBrokerLeaveMessage();
     }
@@ -304,29 +305,6 @@ void broker::updateStatusLeave(Leave_msg *m) {
 
 void broker::handleAckLeaveMessage(Ack_leave_msg *m) {
 
-    if (broker_hub_mode == HUB_MODE && this->getId() == m->getDestId()) {
-        return;
-
-    } else if (broker_hub_mode == NORMAL_EXE
-            && this->getId() == m->getDestId()) {
-
-        //The broker becomes an hub
-        broker_hub_mode = HUB_MODE;
-
-        //Reset everything
-        subs_table.clear();
-
-        for (int i = 0; i < NTOPIC; ++i)
-            subs_counter[i] = 0;
-
-        /*EV << "\nBroker with id " << this->getId() << " is now a hub";*/
-
-        int awakeningDelay = intuniform(MIN_HUB_TIME, MAX_HUB_TIME);
-
-        sendJoinMessage(awakeningDelay);
-    } else if (broker_hub_mode == HUB_MODE && this->getId() != m->getDestId()) {
-        broadcast(m, -1, ONLY_BROKERS);
-    }
 }
 
 void broker::handleAckJoinMessage(Ack_join_msg *m) {
@@ -343,73 +321,55 @@ void broker::handleClientJoinMessage(Join_msg *m) {
     // TODO
 }
 
-// BROKER: send-Leave&Join , handle-Leave&Join&Unsubscribe
-
+//We are leaving, send a self message for timing
 void broker::sendBrokerLeaveMessage() {
     // I send in broadcast to all the connected brokers and clients that I'm leaving and then I pass to the hub_mode
     Leave_msg *leave = new Leave_msg("broker_leave");
     leave->setSrcId(this->getId());
 
-    /*EV << "\nThe Broker with id: " << this->getId()
-     << " wants to leave the network!";*/
-
-    // The inverse may cause problem by still being in normal_exe even after the leave
-    //   broker_hub_mode = HUB_MODE;
-    //We postpone the moment in which the broker will leave the network: The decision is made for the simulation in the init phase
-    //But is performed after a while
     int delay = intuniform(MIN_BLEAVE_DELAY, MAX_BLEAVE_DELAY);
-    broadcast(leave, -1, ALL_GATES, delay);
-
-    // bundleCycle();
-
+    scheduleAt(simTime() + delay, leave);
 }
 
 void broker::sendJoinMessage() {
     sendJoinMessage(0);
 }
 
+// I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
 void broker::sendJoinMessage(int delay) {
-
-    // I send in broadcast to all the connected brokers and clients that I'm joining and then I pass to the hub_mode
     Join_msg *join = new Join_msg("broker_join");
-
-    /*EV << "\nThe Broker with id: " << this->getId()
-     << " wants to join again the network! \n";*/
 
     broadcast(join, -1, ALL_GATES, delay);
 }
 
+//Go in hub mode, reset everything and schedule the re join
 void broker::handleBrokerLeaveMessage(Leave_msg *m) {
-    // It only update the status after the receiving of a leave by a broker
+    assert(m->isSelfMessage());
+    assert(broker_hub_mode == NORMAL_EXE);
 
-    //updateStatusLeave(m);
+    //The broker becomes an hub
+    broker_hub_mode = HUB_MODE;
 
-    // The id of the broker that wanna leave
-    int src_id = m->getSrcId();
+    //Reset everything
+    subs_table.clear();
 
-    //I ack the src_id broker leave
-    Ack_leave_msg *msg = new Ack_leave_msg("ack_leave");
-    msg->setDestId(src_id);
+    for (int i = 0; i < NTOPIC; ++i)
+        subs_counter[i] = 0;
 
-    int channel = m->getArrivalGate()->getIndex();
-    send(msg, "gate$o", channel);
+    int awakeningDelay = intuniform(MIN_HUB_TIME, MAX_HUB_TIME);
 
+    sendJoinMessage(awakeningDelay);
 }
 
 void broker::handleBrokerJoinMessage(Join_msg *m) {
-    // It has to behave as the first time
-
-    //   EV << "\nThe Broker with id: " << this->getId() << " read: " << m->getArrivalGate()->getIndex();
-
     Ack_join_msg *msg = new Ack_join_msg("ack_join");
     int channel = m->getArrivalGate()->getIndex();
     send(msg, "gate$o", channel);
 
-    //add the broker to our list
-
+//add the broker to our list
     broker_gate_table.push_back(channel);
 
-    //and send it our subscription list
+//and send it our subscription list
     for (SubscriptionTable::const_iterator subs_it = subs_table.begin(), end =
             subs_table.end(); subs_it != end; ++subs_it) {
         int topic = subs_it->first;
