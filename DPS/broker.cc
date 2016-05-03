@@ -125,8 +125,9 @@ void broker::handleMessage(cMessage *msg) {
             handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if (strcmp("unsubscribe", msg->getFullName()) == 0) {
             handleUnsubscribeMessage(dynamic_cast<Unsubscribe_msg*>(msg));
-        }
-        else
+        } else if (strcmp("ack_join", msg->getFullName()) == 0) {
+            return;
+        } else
             EV << "unknown message" << endl;
     } else { // In this case I work as hub
              // I have to send the message to all the connected brokers and clients except for the receiver

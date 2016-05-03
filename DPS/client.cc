@@ -147,16 +147,12 @@ void client::handleMessage(cMessage *msg) {
             handleMessageMessage(dynamic_cast<Message_msg*>(msg));
         }
 
-        if (strcmp("broker", msg->getFullName()) == 0) {
+        else if (strcmp("broker", msg->getFullName()) == 0) {
             handleMessageBroker(dynamic_cast<Broker_init_msg*>(msg));
         }
 
-        if (strcmp("broker_join", msg->getFullName()) == 0) {
+        else if (strcmp("broker_join", msg->getFullName()) == 0) {
             handleBrokerJoinMessage(dynamic_cast<Join_msg*>(msg));
-        }
-
-        if (strcmp("broker_leave", msg->getFullName()) == 0) {
-            handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
         }
 
         else
