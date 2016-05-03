@@ -18,7 +18,7 @@
 
 
 
-#define MODE CONSISTENCY
+#define MODE RANDOM
 
 #if (MODE == CLIENT_LEAVE)||(MODE == BROKER_LEAVE)||(MODE == CONSISTENCY)
     const int NTOPIC = 5; //how many topics
@@ -50,17 +50,15 @@
 
 #elif MODE == RANDOM
     const int NTOPIC = 5; //how many topics
-    const int N_SEND = 10; //how many messages a client should send to a new broker
-    const float SUBS_RATIO = 0.2; //the percentage of messages that should be a subscription
+    const int N_SEND = 5; //how many messages a client should send to a new broker
+    const float SUBS_RATIO = 0.6; //the percentage of initial messages that should be a subscription
 
     const const_simtime_t MIN_SUB_DELAY = 0.5; //when to send the subscriptions
     const const_simtime_t MAX_SUB_DELAY = 10.0;
-    const const_simtime_t MIN_PUB_DELAY = 5.0; //when to send the first publish
-    const const_simtime_t MAX_PUB_DELAY = 15.0;
 
     const const_simtime_t RESEND_TIMEOUT = 10.0; //time to re send a self message waiting for the correct timestamp
 
-    const float REPLY_PROB = 0.95; //the probability that a client answer to a message
+    const float REPLY_PROB = 0.12; //the probability that a client answer to a message
     const const_simtime_t MIN_REPLY_DELAY = 1.0; //and the time to answer
     const const_simtime_t MAX_REPLY_DELAY = 5.0;
 

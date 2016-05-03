@@ -156,6 +156,9 @@ void client::sendMsg(int topic, const_simtime_t delay, char content) {
 
     sendDelayed(msg, delay, "gate$o", 0);
     numPubs++;
+
+    EV << this->getFullName() << " sent a message about topic " << topic
+              << " with content " << content << endl;
 }
 
 void client::sendLeave(const_simtime_t delay, const_simtime_t join_drift) {
@@ -208,7 +211,7 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
                             MAX_SUB_DELAY * 100)) / 100);
         } else {
             //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), 0);
+            sendMsg(intuniform(0, NTOPIC - 1), MAX_SUB_DELAY+1.0);
         }
 
     //and maybe a leave
@@ -247,10 +250,10 @@ void client::handleMessageMessage(Message_msg *m) {
     ts_map msg_ts = m->getTs_struct()[topic];
 
     /*EV << "msg" << endl;
-    print(m->getTs_struct());
+     print(m->getTs_struct());
 
-    EV << "old" << endl;
-    print(ts_struct);*/
+     EV << "old" << endl;
+     print(ts_struct);*/
 
     //compare the two vectors
     if (isCasualConsistent(ts_struct[topic], msg_ts, sender)) {
@@ -273,7 +276,7 @@ void client::handleMessageMessage(Message_msg *m) {
     }
 
     /*EV << "new" << endl;
-    print(ts_struct);*/
+     print(ts_struct);*/
 }
 
 void client::sendSubs() {
@@ -306,14 +309,18 @@ void client::displayMessage(Message_msg *m) {
     displayed++;
 
     //Moreover, we have a probability to reply
-    if ((rand() % 100) <= (REPLY_PROB * 100))
+    double X=((double)rand()/(double)RAND_MAX);
+    if (X <= REPLY_PROB){
         sendMsg(m->getTopic(),
                 (const_simtime_t) (intuniform(MIN_REPLY_DELAY * 100,
                         MAX_REPLY_DELAY * 100)) / 100);
+        EV << "reply";
+    }
 
+    //testing
 #if MODE==CONSISTENCY
     if (this->getId() == 4)
-        sendMsg(1, 0.0, '3'); //answer to msg 1 [1 2 -]
+    sendMsg(1, 0.0, '3'); //answer to msg 1 [1 2 -]
 #endif
 
 }

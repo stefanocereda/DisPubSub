@@ -33,10 +33,10 @@ network Network
         }
     submodules:
         client1: client {
-            @display("p=69,179");
+            @display("p=44,158");
         }
         client2: client {
-            @display("p=69,273");
+            @display("p=59,284");
         }
         broker1: broker {
             @display("p=192,222");
@@ -45,10 +45,10 @@ network Network
             @display("p=347,125");
         }
         client3: client {
-            @display("p=261,42");
+            @display("p=237,35");
         }
         client4: client {
-            @display("p=360,35");
+            @display("p=400,24");
         }
         broker3: broker {
             @display("p=569.1925,201.8875");
@@ -57,7 +57,7 @@ network Network
             @display("p=853.1375,285.2475");
         }
         broker6: broker {
-            @display("p=587.4275,427.22");
+            @display("p=472,336");
         }
         broker4: broker {
             @display("p=877.885,106.805");
@@ -81,6 +81,30 @@ network Network
             @display("p=514.4875,543.1425");
         }
 
+        client: client {
+            @display("p=129,98");
+        }
+        client11: client {
+            @display("p=222,335");
+        }
+        client12: client {
+            @display("p=359,227");
+        }
+        client13: client {
+            @display("p=359,452");
+        }
+        client14: client {
+            @display("p=569,70");
+        }
+        client15: client {
+            @display("p=800,35");
+        }
+        client16: client {
+            @display("p=831,409");
+        }
+        client17: client {
+            @display("p=662,316");
+        }
     connections allowunconnected:
         broker1.gate++ <--> ChannelClient <--> client1.gate++;
         broker1.gate++ <--> ChannelClient <--> client2.gate++;
@@ -155,4 +179,12 @@ network Network
 //	broker6.out++ --> Channel --> client10.in;
 //	broker6.in++ <-- Channel <-- client10.out;
 
+        client.gate++ <--> broker1.gate++;
+        client11.gate++ <--> broker1.gate++;
+        client12.gate++ <--> broker2.gate++;
+        client14.gate++ <--> broker3.gate++;
+        client17.gate++ <--> broker3.gate++;
+        client13.gate++ <--> broker6.gate++;
+        client16.gate++ <--> broker5.gate++;
+        client15.gate++ <--> broker4.gate++;
 }
