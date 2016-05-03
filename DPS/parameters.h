@@ -58,7 +58,7 @@
 
     const const_simtime_t RESEND_TIMEOUT = 10.0; //time to re send a self message waiting for the correct timestamp
 
-    const float REPLY_PROB = 0.12; //the probability that a client answer to a message
+    const float REPLY_PROB = 0.10; //the probability that a client answer to a message
     const const_simtime_t MIN_REPLY_DELAY = 1.0; //and the time to answer
     const const_simtime_t MAX_REPLY_DELAY = 5.0;
 

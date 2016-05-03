@@ -78,9 +78,6 @@ void client::initialize() {
 
     /*just for testing*/
 #if MODE == CLIENT_LEAVE
-    /*
-     * SE I MESSAGGI LI MANDIAMO TUTTI ALL'INIZIO POI SI SBRAGA TUTTO, VANNO MANDATI COME RISPOSTE
-     */
     if (this->getId() == 18) {
         sendSub(1, 5.0);
         sendLeave(10.0, 5.0);
@@ -314,7 +311,7 @@ void client::displayMessage(Message_msg *m) {
         sendMsg(m->getTopic(),
                 (const_simtime_t) (intuniform(MIN_REPLY_DELAY * 100,
                         MAX_REPLY_DELAY * 100)) / 100);
-        EV << "reply";
+        EV << "reply" << endl;
     }
 
     //testing
