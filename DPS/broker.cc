@@ -119,8 +119,6 @@ void broker::handleMessage(cMessage *msg) {
             handleMessageMessage(dynamic_cast<Message_msg*>(msg));
         } else if (strcmp("client_leave", msg->getFullName()) == 0) {
             handleClientLeaveMessage(dynamic_cast<Leave_msg*>(msg));
-        } else if (strcmp("client_join", msg->getFullName()) == 0) {
-            handleClientJoinMessage(dynamic_cast<Join_msg*>(msg));
         } else if (strcmp("broker_leave", msg->getFullName()) == 0) {
             handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
         } else if (strcmp("broker_join", msg->getFullName()) == 0) {
