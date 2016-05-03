@@ -36,7 +36,7 @@ private:
     void sendMsg(int topic, const_simtime_t delay);
     void sendSub(int topic, const_simtime_t delay);
     void sendLeave(const_simtime_t delay, const_simtime_t join_drift);
-    void sendJoin(const_simtime_t delay);
+    void reSendSubs(const_simtime_t delay);
     void sendSubs();
     void sendSubs(const_simtime_t delay);
 
@@ -66,7 +66,6 @@ public:
 Define_Module(client);
 
 void client::initialize() {
-    EV << this->getFullName() << " has id: " << this->getId() << endl;
     working_modality = ON;
     for (int t = 0; t < NTOPIC; t++) {
         ts_map foo = ts_map();
@@ -74,14 +73,13 @@ void client::initialize() {
         ts_struct.push_back(foo);
     }
 
-
     /*just for testing*/
 #if MODE == CLIENT_LEAVE
-    if (this->getId() == 18){
+    if (this->getId() == 18) {
         sendSub(1, 5.0);
         sendLeave(10.0, 5.0);
     }
-    else{
+    else {
         sendMsg(1, 6.0);
         sendMsg(1, 12.0);
         sendMsg(0, 13.0);
@@ -90,17 +88,13 @@ void client::initialize() {
     }
 
 #elif MODE == BROKER_LEAVE
-    if (this->getId() == 17){
+    if (this->getId() == 17) {
         sendSub(1, 5.0);
-    }
-    else if (this->getId() == 18)
-    {
+    } else if (this->getId() == 18) {
         sendMsg(1, 10.0);
         sendMsg(1, 20.0);
         sendMsg(1, 30.0);
-    }
-    else if (this->getId() == 15)
-    {
+    } else if (this->getId() == 15) {
         sendMsg(1, 20.5);
     }
 #endif
@@ -117,8 +111,6 @@ void client::sendSub(int topic, const_simtime_t delay) {
     msg->setTopic(topic);
 
     sendDelayed(msg, delay, "gate$o", 0);
-    /*EV << "The client with id: " << this->getId()
-     << " sent a subscribe for the topic: " << topic << endl;*/
     numSubs++;
 }
 
@@ -127,12 +119,11 @@ void client::sendMsg(int topic, const_simtime_t delay) {
     Message_msg *msg = new Message_msg("message");
     msg->setTopic(topic);
     msg->setSenderId(this->getId());
+
     ts_struct[topic][this->getId()]++;
     msg->setTs_struct(ts_struct);
 
     sendDelayed(msg, delay, "gate$o", 0);
-    /*EV << "The client with id: " << this->getId()
-     << " sent a publish for the topic: " << topic << endl;*/
     numPubs++;
 }
 
@@ -141,20 +132,13 @@ void client::sendLeave(const_simtime_t delay, const_simtime_t join_drift) {
     leave->setSrcId(this->getId());
 
     sendDelayed(leave, delay, "gate$o", 0);
-    /*EV << "\n" << "The client with id: " << this->getId()
-     << " want to LEAVE this network!";*/
 
-    sendJoin(delay + join_drift);
-
+    reSendSubs(delay + join_drift);
 }
 
-void client::sendJoin(const_simtime_t delay) {
+void client::reSendSubs(const_simtime_t delay) {
     // The join consists only in resend the subscription for the topic to which I'm interested in
     sendSubs(delay);
-
-    /*EV << "\n" << "The client with id: " << this->getId()
-     << " want to JOIN again the network!";*/
-
 }
 
 void client::handleMessage(cMessage *msg) {
@@ -175,11 +159,13 @@ void client::handleMessage(cMessage *msg) {
             handleBrokerLeaveMessage(dynamic_cast<Leave_msg*>(msg));
         }
 
+        else
+            EV << "client received an unknown message" << endl;
+
     } else {
-        // It may happen when comunicating with a hub
-        /*EV << "\n" << "The client with id: " << this->getId()
-         << " is OFF doesn't care of messages";*/
+        EV << "client received a message while it was dead, neighbor broker should be dead" << endl;
     }
+
     free(msg);
 }
 
@@ -198,6 +184,8 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
                             MAX_PUB_DELAY * 100)) / 100);
 
         }
+
+    //and maybe a leave
     if (rand() % 100 < CLIENT_LEAVE_PROBABILITY * 100) {
         sendLeave(
                 (const_simtime_t) (intuniform(MIN_LEAVE_DELAY * 100,
@@ -247,24 +235,11 @@ void client::handleMessageMessage(Message_msg *m) {
     }
 }
 
-void client::handleBrokerLeaveMessage(Leave_msg *m) {
-    // It only update the status after the receiving of a leave by a broker
-
-    //updateStatusLeave(m);
-
-    //I ack a broker leave
-    Ack_leave_msg *msg = new Ack_leave_msg("ack_leave");
-    int channel = m->getArrivalGate()->getIndex();
-    send(msg, "gate$o", channel);
-
-}
-
 void client::sendSubs() {
     sendSubs(0);
 }
 
 void client::sendSubs(const_simtime_t delay) {
-
     for (unsigned int i = 0; i < my_subs.size(); i++) {
         if (my_subs[i] == true) {
             Subscribe_msg *msg = new Subscribe_msg("subscribe");
