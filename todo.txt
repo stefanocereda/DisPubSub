@@ -3,3 +3,8 @@ quando un client si connette da capo, deve ricevere i messaggi vecchi? Se si, do
 finire le leave
 
 mandare sub/publish/leave a caso
+
+
+
+se rischedula non deve fare il mergino quello di una linea
+se arriva un messaggio da un client per cui noi siamo avanti va mostrato

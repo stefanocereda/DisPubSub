@@ -105,17 +105,17 @@ void client::initialize() {
     }
 
 #elif MODE == CONSISTENCY
-    if (this -> getId() == 3){
+    if (this->getId() == 3) {
         sendMsg(1, 5.0, '1'); //msg 1 [1 - -]
     }
 
-    else if (this -> getId() == 4){
+    else if (this->getId() == 4) {
         sendSub(1, 1.0);
 
-        sendMsg(1, 5.0, '2');//concurrent 2 [- 1 -]
+        sendMsg(1, 5.0, '2'); //concurrent 2 [- 1 -]
     }
 
-    else if (this -> getId() == 5){
+    else if (this->getId() == 5) {
         sendSub(1, 1.0);
         //we must display 1/2, 3
         //we must receive 3,2,1
@@ -158,7 +158,6 @@ void client::sendMsg(int topic, const_simtime_t delay, char content) {
     numPubs++;
 }
 
-
 void client::sendLeave(const_simtime_t delay, const_simtime_t join_drift) {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
@@ -191,14 +190,16 @@ void client::handleMessage(cMessage *msg) {
             EV << "client received an unknown message" << endl;
 
     } else {
-        EV << "client received a message while it was dead, neighbor broker should be dead" << endl;
+        EV
+                  << "client received a message while it was dead, neighbor broker should be dead"
+                  << endl;
     }
 
     free(msg);
 }
 
 void client::handleMessageBroker(Broker_init_msg *msg) {
-    //We are attached to a new broker, send some subscriptions and some messages with random delays
+    //We are attached to a new broker, send some subscriptions with random delays
     for (int i = 0; i < N_SEND; i++)
         if (rand() % 100 < SUBS_RATIO * 100) {
             //send a sub
@@ -220,9 +221,9 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
     }
 }
 
-void client::print(ts_map_vect s){
+void client::print(ts_map_vect s) {
     for (int t = 0; t < NTOPIC; t++) {
-        for (ts_map::iterator it = s[t].begin(); it != s[t].end(); ++it){
+        for (ts_map::iterator it = s[t].begin(); it != s[t].end(); ++it) {
             EV << it->first << "->" << s[t][it->first] << "\t";
         }
         EV << "topic " << t << endl;
@@ -236,45 +237,43 @@ void client::handleMessageMessage(Message_msg *m) {
     //if I am not interested exit
     if (!my_subs[topic]) {
         wrongDispatch++;
-        EV << "client " << this->getId() << " received a mesagge about topic "
-                  << topic << " but is not interested" << endl;
+        EV << this->getFullName() << " received a mesagge about topic " << topic
+                  << " but is not interested" << endl;
         return;
     }
 
     //check the timestamp, if possible show the message, otherwise resend it as self message
     ts_map my_ts = ts_struct[topic];
     ts_map msg_ts = m->getTs_struct()[topic];
+
     EV << "msg" << endl;
     print(m->getTs_struct());
 
+    EV << "old" << endl;
+    print(ts_struct);
 
-    if (my_ts.find(m->getSenderId()) == my_ts.end()){ //this is a new client, we trust him about its own, but only for the current topic
-        EV << "old" << endl;
-        print(ts_struct);
-        ts_struct[topic][sender] = msg_ts[sender] - 1;
-        EV << "new" << endl;
-        print(ts_struct);
-    }
-
-    //now we can compare the two vectors
+    //compare the two vectors
     if (isCasualConsistent(ts_struct[topic], msg_ts, sender)) {
-        displayMessage(m);
         ts_struct[topic][sender] = msg_ts[sender]; //merge the only relevant
+        displayMessage(m);
 
     } else if (!m->isSelfMessage()) {
         //try to wait for the missing messages
-        EV << "client " << this->getId() << " rescheduled a message" << endl;
+        EV << this->getFullName() << " rescheduled a message" << endl;
         rescheduled++;
         scheduleAt(simTime() + RESEND_TIMEOUT, m->dup());
 
     } else {
         //it is a resent message and still we did not receive the missing messages, treat them as lost and go on
-        EV << "client " << this->getId() << " gave up waiting" << endl;
-        displayMessage(m);
-        skipped++;
+        EV << this->getFullName() << " gave up waiting" << endl;
         //maybe the problem was not the sender, so we should merge everything
         mergeAllTs(msg_ts, topic);
+        displayMessage(m);
+        skipped++;
     }
+
+    EV << "new" << endl;
+    print(ts_struct);
 }
 
 void client::sendSubs() {
@@ -302,7 +301,8 @@ void client::handleBrokerJoinMessage(Join_msg *m) {
 }
 
 void client::displayMessage(Message_msg *m) {
-    EV << this->getFullName() << " shows a message with content " << m->getContent() << endl;
+    EV << this->getFullName() << " shows a message with content "
+              << m->getContent() << endl;
     displayed++;
 
     //Moreover, we have a probability to reply
@@ -311,9 +311,9 @@ void client::displayMessage(Message_msg *m) {
                 (const_simtime_t) (intuniform(MIN_REPLY_DELAY * 100,
                         MAX_REPLY_DELAY * 100)) / 100);
 
-#ifdef MODE CONSISTENCY
-    if (this -> getId() == 4)
-          sendMsg(1, 0.0, '3'); //answer to msg 1 [1 2 -]
+#if MODE==CONSISTENCY
+    if (this->getId() == 4)
+        sendMsg(1, 0.0, '3'); //answer to msg 1 [1 2 -]
 #endif
 
 }
@@ -329,9 +329,10 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
     //ts(r)[j] = V_k[j] + 1
     //ts(r)[i] <= V_k[i] for all i != j
 
-    //we know for sure that the receiver is in our struct, since we merged it before
-    if (other_map[sender] != our_map[sender] + 1) {
-        EV << this->getFullName() << " received a message from client "
+    //if we know this client we check consistency
+    if ((our_map.find(sender) != our_map.end())
+            && (other_map[sender] > our_map[sender] + 1)) {
+        EV << this->getFullName() << " received a message from client with id "
                   << sender << " but waits to show because the sender ts is"
                   << other_map[sender] << " and our is " << our_map[sender]
                   << endl;
@@ -346,17 +347,17 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
             continue;
 
         if (our_map.find(it->first) == our_map.end()) { //we do not know this client
-            EV << "client " << this->getId()
-                      << " received a message from client " << sender
-                      << " but waits to show because the sender ts contains client "
+            EV << this->getFullName()
+                      << " received a message from client with id " << sender
+                      << " but waits to show because the sender ts contains client with id"
                       << it->first << " and we do not." << endl;
             return false;
         }
 
         if (it->second > our_map[it->first] + 1)
-            EV << "client " << this->getId()
-                      << " received a message from client " << sender
-                      << " but waits to show because the sender ts contains client "
+            EV << this->getFullName()
+                      << " received a message from client with id" << sender
+                      << " but waits to show because the sender ts contains client with id "
                       << it->first << " with ts " << it->second
                       << " but our is " << our_map[it->first] << endl;
         return false;
