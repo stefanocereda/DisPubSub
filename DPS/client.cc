@@ -246,11 +246,11 @@ void client::handleMessageMessage(Message_msg *m) {
     ts_map my_ts = ts_struct[topic];
     ts_map msg_ts = m->getTs_struct()[topic];
 
-    EV << "msg" << endl;
+    /*EV << "msg" << endl;
     print(m->getTs_struct());
 
     EV << "old" << endl;
-    print(ts_struct);
+    print(ts_struct);*/
 
     //compare the two vectors
     if (isCasualConsistent(ts_struct[topic], msg_ts, sender)) {
@@ -272,8 +272,8 @@ void client::handleMessageMessage(Message_msg *m) {
         skipped++;
     }
 
-    EV << "new" << endl;
-    print(ts_struct);
+    /*EV << "new" << endl;
+    print(ts_struct);*/
 }
 
 void client::sendSubs() {
@@ -354,13 +354,14 @@ bool client::isCasualConsistent(ts_map our_map, ts_map other_map, int sender) {
             return false;
         }
 
-        if (it->second > our_map[it->first] + 1)
+        if (it->second > our_map[it->first] + 1) {
             EV << this->getFullName()
                       << " received a message from client with id" << sender
                       << " but waits to show because the sender ts contains client with id "
                       << it->first << " with ts " << it->second
                       << " but our is " << our_map[it->first] << endl;
-        return false;
+            return false;
+        }
     }
 
     return true;
