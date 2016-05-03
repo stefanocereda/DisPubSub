@@ -32,7 +32,7 @@
 %\usetheme{Bergen}
 %\usetheme{Berkeley}
 %\usetheme{Berlin}
-%\usetheme{Boadilla}
+\usetheme{Boadilla}
 %\usetheme{CambridgeUS}
 %\usetheme{Copenhagen}
 %\usetheme{Darmstadt}
@@ -40,7 +40,7 @@
 %\usetheme{Frankfurt}
 %\usetheme{Goettingen}
 %\usetheme{Hannover}
-\usetheme{Ilmenau}
+%\usetheme{Ilmenau}
 %\usetheme{JuanLesPins}
 %\usetheme{Luebeck}
 %\usetheme{Madrid}
@@ -182,8 +182,8 @@ Vediamo adesso i punti salienti della simulazione della client leave/join:
 		\item Fase di inizializzazione della rete.
 		\item Funzionamento \emph{normale} della rete con scambio di messaggi correttamente inoltrati secondo le subscriptions.
 		\item \emph{Broker} performa una leave ed entra in \emph{hub mode}.
-		\item La rete continua a funzionare senza il contributo di \emph{borker}.
-		\item \emph{Broker} effettua una join e, i broker vicini, gli comunicano quali fossero le subscriptions a cui era interessato prima della leave.
+		\item La rete continua a funzionare senza il contributo di \emph{broker}.
+		\item \emph{Broker} effettua una join e, i broker vicini, gli comunicano quali sono le subscriptions a cui è interessato.
 		\item La rete torna a funzionare come prima della leave, con un corretto inoltro dei messaggi da parte di \emph{broker}.
 	\end{itemize}
 \end{frame}
