@@ -1,0 +1,4 @@
+1x15 DataFrames.DataFrame
+| Row | client | id_mean | id_std  | subs_mean | subs_std | pubs_mean | pubs_std | wrong_mean | wrong_std | displayed_mean | displayed_std | reschedlued_mean | reschedlued_std | skipped_mean | skipped_std |
+|-----|--------|---------|---------|-----------|----------|-----------|----------|------------|-----------|----------------|---------------|------------------|-----------------|--------------|-------------|
+| 1   | "c"    | 15.3889 | 6.90833 | 3.85      | 1.9447   | 6.27222   | 4.52162  | 0.0444444  | 0.295633  | 47.6833        | 46.5145       | 5.26111          | 5.15499         | 2.29444      | 1.73269     |

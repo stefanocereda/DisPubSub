@@ -1,0 +1,4 @@
+1x11 DataFrames.DataFrame
+| Row | broker | id_mean | id_std  | received_subs_mean | received_subs_std | sent_subs_mean | sent_subs_std | received_pubs_mean | received_pubs_std | sent_pubs_mean | sent_pubs_std |
+|-----|--------|---------|---------|--------------------|-------------------|----------------|---------------|--------------------|-------------------|----------------|---------------|
+| 1   | "b"    | 7.83333 | 2.56553 | 38.1667            | 11.8281           | 25.4667        | 29.1073       | 94.1167            | 53.4977           | 217.917        | 172.691       |
