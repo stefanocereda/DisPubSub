@@ -194,8 +194,6 @@ void client::handleMessage(cMessage *msg) {
                   << "client received a message while it was dead, neighbor broker should be dead"
                   << endl;
     }
-
-    free(msg);
 }
 
 void client::handleMessageBroker(Broker_init_msg *msg) {
