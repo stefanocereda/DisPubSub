@@ -1,12 +1,5 @@
 package dps;
 
-simple delayer
-{
-    @display("i=device/server1");
-    gates:
-        inout gate[];
-}
-
 network Delay
 {
     @display("bgb=805,376");

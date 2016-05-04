@@ -4,12 +4,9 @@ simple client
 {
     @display("i=old/laptop");
     gates:
-        inout gate[]; //TODO: il client non dovrebbe avere un solo link?
+        inout gate[];
 }
 
-//
-// TODO documentation
-//
 simple broker
 {
     @display("i=device/server2");
@@ -17,9 +14,13 @@ simple broker
         inout gate[];
 }
 
-//
-// TODO documentation
-//
+simple delayer
+{
+    @display("i=device/server");
+    gates:
+        inout gate[];
+}
+
 network Network
 {
     types:
@@ -105,6 +106,9 @@ network Network
         client17: client {
             @display("p=662,316");
         }
+        delayer: delayer {
+            @display("p=448,159");
+        }
     connections allowunconnected:
         broker1.gate++ <--> ChannelClient <--> client1.gate++;
         broker1.gate++ <--> ChannelClient <--> client2.gate++;
@@ -122,62 +126,10 @@ network Network
         broker6.gate++ <--> ChannelClient <--> client10.gate++;
 
         broker1.gate++ <--> ChannelBroker <--> broker2.gate++;
-        broker2.gate++ <--> ChannelBroker <--> broker3.gate++;
+        delayer.gate++ <--> ChannelBroker <--> broker3.gate++;
         broker3.gate++ <--> ChannelBroker <--> broker4.gate++;
         broker3.gate++ <--> ChannelBroker <--> broker5.gate++;
         broker3.gate++ <--> ChannelBroker <--> broker6.gate++;
-
-	//Broker 1
-//	broker1.out++ --> Channel --> client1.in;
-//	broker1.in++ <-- Channel <-- client1.out;
-
-//	broker1.out++ --> Channel --> client2.in;
-//	broker1.in++ <-- Channel <-- client2.out;
-
-//	broker1.out++ --> Channel --> broker2.in++;
-//	broker1.in++ <-- Channel <-- broker2.out++;
-
-
-	//Broker 2
-//	broker2.out++ --> Channel --> client3.in;
-//	broker2.in++ <-- Channel <-- client3.out;
-
-//	broker2.out++ --> Channel --> client4.in;
-//	broker2.in++ <-- Channel <-- client4.out;
-
-//	broker2.out++ --> Channel --> broker3.in++;
-//	broker2.in++ <-- Channel <-- broker3.out++;
-
-	//Broker 3
-//	broker3.out++ --> Channel --> broker4.in++;
-//	broker3.in++ <-- Channel <-- broker4.out++;
-
-//	broker3.out++ --> Channel --> broker5.in++;
-//	broker3.in++ <-- Channel <-- broker5.out++;
-
-//	broker3.out++ --> Channel --> broker6.in++;
-//	broker3.in++ <-- Channel <-- broker6.out++;
-
-	//Broker 4
-//	broker4.out++ --> Channel --> client5.in;
-//	broker4.in++ <-- Channel <-- client5.out;
-
-//	broker4.out++ --> Channel --> client6.in;
-//	broker4.in++ <-- Channel <-- client6.out;
-
-	//Broker 5
-//	broker5.out++ --> Channel --> client7.in;
-//	broker5.in++ <-- Channel <-- client7.out;
-
-//	broker5.out++ --> Channel --> client8.in;
-//	broker5.in++ <-- Channel <-- client8.out;
-
-	//Broker 6
-//	broker6.out++ --> Channel --> client9.in;
-//	broker6.in++ <-- Channel <-- client9.out;
-
-//	broker6.out++ --> Channel --> client10.in;
-//	broker6.in++ <-- Channel <-- client10.out;
 
         client.gate++ <--> broker1.gate++;
         client11.gate++ <--> broker1.gate++;
@@ -187,4 +139,5 @@ network Network
         client13.gate++ <--> broker6.gate++;
         client16.gate++ <--> broker5.gate++;
         client15.gate++ <--> broker4.gate++;
+        delayer.gate++ <--> ChannelBroker <--> broker2.gate++;
 }
