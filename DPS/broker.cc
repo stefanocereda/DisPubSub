@@ -9,7 +9,6 @@
 #include "unsubscribe_m.h"
 #include "subscribe_m.h"
 #include "leave_m.h"
-#include "ack_leave_m.h"
 #include "join_m.h"
 #include <algorithm>
 #include <omnetpp.h>
@@ -59,7 +58,6 @@ private:
     void handleBrokerLeaveMessage(Leave_msg *m);
     void handleBrokerJoinMessage(Join_msg *m);
     void handleUnsubscribeMessage(Unsubscribe_msg *m);
-    void handleAckLeaveMessage(Ack_leave_msg *m);
     void handleAckJoinMessage(Ack_join_msg *m);
     void sendBrokerLeaveMessage();
     void sendJoinMessage();
