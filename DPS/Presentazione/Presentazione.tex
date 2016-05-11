@@ -168,7 +168,7 @@ Vediamo adesso i punti salienti della simulazione della client leave/join:
 \begin{frame}
 
 	
-\includemedia[activate=pageopen,addresource=Video/clientleavejoin.flv,windowed=1024x768,flashvars={source=Video/clientleavejoin.flv}]{}{VPlayer.swf}
+	\includemedia[activate=pageopen,addresource=Video/clientleavejoin.flv,windowed=1024x768,flashvars={source=Video/clientleavejoin.flv}]{}{VPlayer.swf}
 
 \end{frame}
 
@@ -190,8 +190,69 @@ Vediamo adesso i punti salienti della simulazione della client leave/join:
 
 \begin{frame}
 	
+		\includemedia[activate=pageopen,addresource=Video/brokerleavejoinofficial.flv,windowed=1024x768,flashvars={source=Video/brokerleavejoinofficial.flv}]{}{VPlayer.swf}
 	
-	\includemedia[activate=pageopen,addresource=Video/brokerleavejoinofficial.flv,windowed=1024x768,flashvars={source=Video/brokerleavejoinofficial.flv}]{}{VPlayer.swf}
+\end{frame}
+
+\subsection{Causal Consistency}
+\begin{frame}
+	\frametitle{Causal Consistency}
+	
+		\begin{figure}[h!]
+			\centering
+			\includegraphics{Risorse/cc.png} %
+			\caption{File Causal Consistency structure}
+		\end{figure}
+		
+\end{frame}
+
+\begin{frame}
+	\frametitle{Causal Consistency Comparison}
+	
+	\begin{itemize}
+		\item Per la \emph{Causal Consistency} abbiamo utilizzato dei \emph{vector clock} la cui lunghezza varia dinamicamente con il comportamento della rete. Infatti nel nostro modello il numero di client può variare dinamicamente ed non è noto a priori. La regole che governano i vector clock per ottenere la \emph{causal consistency} restano immutate ad eccezione della regola:\\
+		
+		\begin{center}
+			$ts\left ( r \right )\left [ i \right ] \leq V_k$  $ \forall i \neq j$
+		\end{center}
+		
+		
+		 La regola generale descritta sopra è estesa nel caso si verifichino i seguenti casi:
+		\begin{itemize}
+			\item Se il messaggio contiene timestamp di clients non conosciuti dal ricevente, allora esso non sarà \emph{causal consistent}. (Potremmo dover ancora ricevere dei messaggi dai suddetti clienti)
+			\item Se il messaggio contiene timestamp di clients conosciuti solo dal ricevente, questo non influenzerà la consistenza.
+		\end{itemize}
+	\end{itemize}
+	
+\end{frame}
+
+\section{Statistiche}
+
+\begin{frame}
+	\Huge{\centerline{Statistiche}}
+\end{frame}
+
+\subsection{Statistiche Broker}
+\begin{frame}
+	\frametitle{Statistiche Broker}
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics{Risorse/broker_stats.png} %
+		\caption{File Broker Statistics}
+	\end{figure}
+	
+\end{frame}
+
+\subsection{Statistiche Client}
+\begin{frame}
+	\frametitle{Statistiche Client}
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics{Risorse/client_stats.png} %
+		\caption{File Client Statistics}
+	\end{figure}
 	
 \end{frame}
 
