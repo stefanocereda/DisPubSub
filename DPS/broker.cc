@@ -64,7 +64,6 @@ private:
     void sendJoinMessage(int delay);
     void broadcast(cMessage *m, int except_channel, int mode);
     void broadcast(cMessage *m, int except_channel, int mode, int delay);
-    void bundleCycle();
 
 protected:
     // The following redefined virtual function holds the algorithm.
@@ -270,19 +269,10 @@ void broker::updateStatusLeave(Leave_msg *m) {
                             "unsubscribe");
                     unsubscribe->setTopic(topics_it->first);
 
-                    /*EV << "\n Broker with id " << this->getId()
-                     << " unsubscribe to the topic "
-                     << topics_it->first;
-
-                     EV << "\n current chan_list values: ";*/
                     for (std::list<int>::iterator iter = chans_list->begin();
                             iter != chans_list->end(); iter++) {
-                        /*EV << *iter << " , ";*/
                     }
 
-                    /*EV << "\n Broker with id " << this->getId()
-                     << " BROADCAST the UNSUBSCRIBE";
-                     EV << "\n Except-Channel " << *chans_it;*/
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
 
                     //and also remove it from the map
@@ -379,9 +369,6 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
     int topic = m->getTopic();
     int in_chan = m->getArrivalGate()->getIndex();
 
-    /*EV << " \n handling the unsubscribe-chain " << " for topic: " << topic
-     << " in_chan " << in_chan;*/
-
 // Get the iterator referred on the topic of the message
     SubscriptionTable::iterator topic_it = subs_table.find(topic);
 
@@ -405,10 +392,6 @@ void broker::handleUnsubscribeMessage(Unsubscribe_msg *m) {
                     Unsubscribe_msg *unsubscribe = new Unsubscribe_msg(
                             "unsubscribe");
                     unsubscribe->setTopic(topic);
-
-                    /*EV << "\nBroker with id " << this->getId()
-                     << " continue the unsubscribe chain for "
-                     << topic_it->first;*/
 
                     // Send it in broadcast to only the connected brokers
                     broadcast(unsubscribe, in_chan, ONLY_BROKERS);
