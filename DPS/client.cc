@@ -68,8 +68,9 @@ public:
 Define_Module(client);
 
 void client::initialize() {
-    working_modality = ON;
-    for (int t = 0; t < NTOPIC; t++) {
+    working_modality = ON; //we start start not as hub
+
+    for (int t = 0; t < NTOPIC; t++) { //set to zero our timestamps in all the topics
         ts_map foo = ts_map();
         foo[this->getId()] = 0;
         ts_struct.push_back(foo);
@@ -141,6 +142,7 @@ void client::sendMsg(int topic, const_simtime_t delay) {
     sendMsg(topic, delay, 'a');
 }
 
+//Send a message for a topic with a content
 void client::sendMsg(int topic, const_simtime_t delay, char content) {
     Message_msg *msg = new Message_msg("message");
     msg->setTopic(topic);
@@ -157,12 +159,14 @@ void client::sendMsg(int topic, const_simtime_t delay, char content) {
               << " with content " << content << endl;
 }
 
+//Leave the network
 void client::sendLeave(const_simtime_t delay, const_simtime_t join_drift) {
     Leave_msg *leave = new Leave_msg("client_leave");
     leave->setSrcId(this->getId());
 
     sendDelayed(leave, delay, "gate$o", 0);
 
+    //come back in the network
     reSendSubs(delay + join_drift);
 }
 
@@ -205,7 +209,7 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
                             MAX_SUB_DELAY * 100)) / 100);
         } else {
             //send a publish
-            sendMsg(intuniform(0, NTOPIC - 1), MAX_SUB_DELAY+1.0);
+            sendMsg(intuniform(0, NTOPIC - 1), MAX_SUB_DELAY + 1.0);
         }
 
     //and maybe a leave
@@ -218,6 +222,7 @@ void client::handleMessageBroker(Broker_init_msg *msg) {
     }
 }
 
+//print the timestamp map
 void client::print(ts_map_vect s) {
     for (int t = 0; t < NTOPIC; t++) {
         for (ts_map::iterator it = s[t].begin(); it != s[t].end(); ++it) {
@@ -277,6 +282,7 @@ void client::sendSubs() {
     sendSubs(0);
 }
 
+//Send subs for all the topic we are interested in
 void client::sendSubs(const_simtime_t delay) {
     for (unsigned int i = 0; i < my_subs.size(); i++) {
         if (my_subs[i] == true) {
@@ -303,8 +309,8 @@ void client::displayMessage(Message_msg *m) {
     displayed++;
 
     //Moreover, we have a probability to reply
-    double X=((double)rand()/(double)RAND_MAX);
-    if (X <= REPLY_PROB){
+    double X = ((double) rand() / (double) RAND_MAX);
+    if (X <= REPLY_PROB) {
         sendMsg(m->getTopic(),
                 (const_simtime_t) (intuniform(MIN_REPLY_DELAY * 100,
                         MAX_REPLY_DELAY * 100)) / 100);
