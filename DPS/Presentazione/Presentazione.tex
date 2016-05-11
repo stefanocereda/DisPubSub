@@ -138,8 +138,9 @@ Politecnico di Milano \\ % Your institution for the title page
 	Nel realizzare la traccia abbiamo fatto le seguenti assunzioni:
 	\begin{itemize}
 		\item Quando un broker smette di funzionare si comporta come un hub.
-		\item Canali sicuri.
+		\item Canali affidabili.
 		\item Che la rete simulata sia quella di un overlay network e che sia aciclica per costruzione.
+		\item Ogni Cliente ha un ID univoco.
 	\end{itemize}
 \end{frame}
 
@@ -220,7 +221,7 @@ Vediamo adesso i punti salienti della simulazione della client leave/join:
 		 La regola generale descritta sopra è estesa nel caso si verifichino i seguenti casi:
 		\begin{itemize}
 			\item Se il messaggio contiene timestamp di clients non conosciuti dal ricevente, allora esso non sarà \emph{causal consistent}. (Potremmo dover ancora ricevere dei messaggi dai suddetti clienti)
-			\item Se il messaggio contiene timestamp di clients conosciuti solo dal ricevente, questo non influenzerà la consistenza.
+			\item Se il messaggio non contiene timestamp di clients conosciuti solo dal ricevente, questo non influenzerà la consistenza.
 		\end{itemize}
 	\end{itemize}
 	
