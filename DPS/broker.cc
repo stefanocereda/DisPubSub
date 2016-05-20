@@ -297,7 +297,7 @@ void broker::handleAckJoinMessage(Ack_join_msg *m) {
 
 //We are leaving, send a self message for timing
 void broker::sendBrokerLeaveMessage() {
-    // I send in broadcast to all the connected brokers and clients that I'm leaving and then I pass to the hub_mode
+    // We go in hub mode, don't tell anyone and schedule a self message for our come back
     Leave_msg *leave = new Leave_msg("broker_leave");
     leave->setSrcId(this->getId());
 
